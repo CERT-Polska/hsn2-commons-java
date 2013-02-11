@@ -19,16 +19,11 @@
 
 package pl.nask.hsn2.bus.api.endpoint.pooled;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pl.nask.hsn2.bus.api.BusException;
 import pl.nask.hsn2.bus.api.Message;
-import pl.nask.hsn2.bus.api.TimeoutException;
 import pl.nask.hsn2.bus.api.endpoint.FireAndForgetEndPoint;
 
 /**
@@ -51,6 +46,8 @@ public class PooledFireAndForgetEndPoint extends AbstractPooledEndPoint implemen
 	private PooledNEPCreateCallback createCallback;
 	private long timeout = DEFAULT_TIMEOUT;
 	
+	private final FireAndForgetEndPoint endPoint;
+	
 	/**
 	 * This is simplest constructor of <code>PooledNotificationEndPoint</code>.
 	 * Default maximum number of threads is 10.
@@ -58,11 +55,10 @@ public class PooledFireAndForgetEndPoint extends AbstractPooledEndPoint implemen
 	 * @param createCallback <code>NotificationEndpoint</code> factory callback.
 	 * @throws BusException If there is any problem, this exception will thrown.
 	 */
-	public PooledFireAndForgetEndPoint(
-			PooledNEPCreateCallback createCallback)
+	public PooledFireAndForgetEndPoint(PooledNEPCreateCallback createCallback)
 				throws BusException {
-		super();
 		this.createCallback = createCallback;
+		endPoint = createCallback.create();
 		super.open();
 	}
 	
@@ -74,75 +70,43 @@ public class PooledFireAndForgetEndPoint extends AbstractPooledEndPoint implemen
 	 * @param createCallback <code>NotificationEndpoint</code> factory callback.
 	 * @throws BusException If there is any problem, this exception will thrown.
 	 */
-	public PooledFireAndForgetEndPoint(int maxThreads,
-			PooledNEPCreateCallback createCallback)
+	public PooledFireAndForgetEndPoint(int maxThreads, PooledNEPCreateCallback createCallback)
 				throws BusException {
 		super(maxThreads);
 		this.createCallback = createCallback;
+		endPoint = createCallback.create();
 		super.open();
 	}
 	
 	@Override
 	public final void sendNotify(final Message message) throws BusException {
-		final FireAndForgetEndPoint endPoint = createCallback.create();
-		try {
-			Future<?> future = getExecutor().submit(new Runnable(){
-				@Override
-				public void run() {
-					try {
-						endPoint.sendNotify(message);
-					} catch (BusException e) {
-						LOGGER.error("Cannot process message", e);
-					}
+		
+		getExecutor().execute(new Runnable(){
+			@Override
+			public void run() {
+				try {
+					endPoint.sendNotify(message);
+				} catch (BusException e) {
+					LOGGER.error("Cannot process message", e);
 				}
-			});
-			wait(future);
-		} finally {
-			endPoint.close();
-		}
+			}
+		});
 	}
 
 	@Override
 	public final void spread(final Message message, final String[] servicesNames)
 			throws BusException {
-		final FireAndForgetEndPoint endPoint = createCallback.create();
-		try {
-			Future<?> future = getExecutor().submit(new Runnable(){
-				@Override
-				public void run() {
-					try {
-						endPoint.spread(message, servicesNames);
-					} catch (BusException e) {
-						LOGGER.error("Cannot process message", e);
-					}
+		
+		getExecutor().execute(new Runnable(){
+			@Override
+			public void run() {
+				try {
+					endPoint.spread(message, servicesNames);
+				} catch (BusException e) {
+					LOGGER.error("Cannot process message", e);
 				}
-			});
-			wait(future);
-		} finally {
-			endPoint.close();
-		}
-	}
-
-	/**
-	 * Waits for task finish.
-	 * 
-	 * @param future Task to wait for.
-	 * @throws BusException The exception will thrown if there is execution problem.
-	 * @throws TimeoutException The exception will thrown if timeout.
-	 */
-	private void wait(Future<?> future) throws BusException {
-		try {
-			future.get(getTimeout(), TimeUnit.SECONDS);
-			if (future.isCancelled()) {
-				throw new BusException("Task cancelled...");
 			}
-		} catch (java.util.concurrent.TimeoutException ex) {
-			throw new TimeoutException("Witing for response message timeout.", ex);
-		} catch (InterruptedException ex) {
-			throw new BusException("Problem with sending message, thread interruped...", ex);
-		} catch (ExecutionException ex) {
-			throw new BusException("Problem with sending message, task aborted...", ex);
-		}
+		});
 	}
 
 	/**
@@ -161,7 +125,7 @@ public class PooledFireAndForgetEndPoint extends AbstractPooledEndPoint implemen
 	 * @return Number of seconds.
 	 */
 	public final long getTimeout() {
-		return this.timeout;
+		return timeout;
 	}
 
 	/**
