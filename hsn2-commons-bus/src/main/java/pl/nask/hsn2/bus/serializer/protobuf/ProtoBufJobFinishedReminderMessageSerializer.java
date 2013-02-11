@@ -41,13 +41,13 @@ public class ProtoBufJobFinishedReminderMessageSerializer implements MessageSeri
 	}
 
 	@Override
-	public final JobFinishedReminder deserialize(Message message)
-			throws MessageSerializerException {
+	public final JobFinishedReminder deserialize(Message message) throws MessageSerializerException {
 		try {
-			pl.nask.hsn2.protobuff.Jobs.JobFinishedReminder pbJobFinishedReminder = pl.nask.hsn2.protobuff.Jobs.JobFinishedReminder.parseFrom(message.getBody());
-			//return new JobFinished(pbJobFinished.getJob(),JobStatus.valueOf(pbJobFinished.getStatus().name()));
+			pl.nask.hsn2.protobuff.Jobs.JobFinishedReminder pbJobFinishedReminder = pl.nask.hsn2.protobuff.Jobs.JobFinishedReminder
+					.parseFrom(message.getBody());
 			JobFinishedReminder jobFinishedReminder = new JobFinishedReminder(pbJobFinishedReminder.getJob());
-			// WST task w protobuff jest opisany jako long, a powinien byc jako int
+			// TODO protobuf definition should be fixed, and then remove int cast below.
+			// Offending task is defined as uint64 (long in java), but it should be fixed32 (int in java).
 			jobFinishedReminder.setOffendingTask((int) pbJobFinishedReminder.getOffendingTask());
 			return jobFinishedReminder;
 		} catch (InvalidProtocolBufferException e) {
