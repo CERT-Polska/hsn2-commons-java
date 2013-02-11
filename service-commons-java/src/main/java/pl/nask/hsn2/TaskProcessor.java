@@ -48,19 +48,22 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
     private final TaskFactory jobFactory;
     private final TaskContextFactory taskContextFactory;
     private final ServiceConnector connector;
+    private final FinishedJobsListener finishedJobsListener;
 
 	private AtomicBoolean interrupted = new AtomicBoolean(false);
 
-    public TaskProcessor(TaskFactory jobFactory, ServiceConnector serviceConnector) {
+    public TaskProcessor(TaskFactory jobFactory, ServiceConnector serviceConnector, FinishedJobsListener finishedJobsListener) {
         this.jobFactory = jobFactory;
         this.connector = serviceConnector;
         this.taskContextFactory = this;
+        this.finishedJobsListener = finishedJobsListener;
     }
 
-    public TaskProcessor(TaskFactory jobFactory, ServiceConnector serviceConnector, TaskContextFactory contextFactory) {
+    public TaskProcessor(TaskFactory jobFactory, ServiceConnector serviceConnector, TaskContextFactory contextFactory, FinishedJobsListener finishedJobsListener) {
         this.jobFactory = jobFactory;
         this.connector = serviceConnector;
         this.taskContextFactory = contextFactory;
+        this.finishedJobsListener = finishedJobsListener;
     }
     
     public void setCanceled() {
@@ -94,35 +97,42 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
 			long taskStartMilis = System.currentTimeMillis();
 			jobId = req.getJob();
 			reqId = req.getTaskId();
-			ParametersWrapper params = new ParametersWrapper(req.getParametersList());
-			LOG.info("Got TaskRequest (jobId={}, requestId={}) with params={}, ObjectData={}", new Object[] { jobId, reqId, params, req.getObject() });
-
-			LOG.debug("Fetching data from object store, jobId={}, original ObjectData={}", jobId, req.getObject());
-			ObjectData data = getDataFromObjectStore(jobId, req.getObject());
-			LOG.debug("Got fresh data from object store: {}", data);
-
-			ObjectDataWrapper objectData = new ObjectDataWrapper(data);
-			TaskContext context = taskContextFactory.createTaskContext(jobId, reqId, objectData.getId(), connector);
-			Task job = jobFactory.newTask(context, params, objectData);
-			if (job.takesMuchTime()) {
-				LOG.info("Sending TaskAccepted (jobId={}, reqId={}, ObjectData={})", new Object[] {jobId, reqId, req.getObject()});
-				connector.sendTaskAccepted(jobId, reqId);
-			}
-
-			LOG.info("Processing task (jobId={}, reqId={})", jobId, reqId);
-			job.process();
-			LOG.debug("Task completed (jobId={}, reqId={})", jobId, reqId);
-
-			context.flush();
-			List<Long> newObjects = context.getAddedObjects();
-			LOG.debug("Sending TaskComplete (jobId={}, reqId={})", jobId, reqId);
-			if (context.hasWarnings()) {
-				connector.sendTaskCompletedWithWarnings(jobId, reqId, newObjects, context.getWarnings());
+			
+			if (finishedJobsListener != null && finishedJobsListener.isJobFinished(jobId)) {
+				connector.ignoreLastTaskRequest();
+				LOG.warn("Got TaskRequest for finished job. Ignored. (jobId={}, requestId={})", jobId, reqId);
 			} else {
-				connector.sendTaskComplete(jobId, reqId, newObjects);
+				ParametersWrapper params = new ParametersWrapper(req.getParametersList());
+				LOG.info("Got TaskRequest (jobId={}, requestId={}) with params={}, ObjectData={}", new Object[] { jobId, reqId, params, req.getObject() });
+
+				LOG.debug("Fetching data from object store, jobId={}, original ObjectData={}", jobId, req.getObject());
+				ObjectData data = getDataFromObjectStore(jobId, req.getObject());
+				LOG.debug("Got fresh data from object store: {}", data);
+
+				ObjectDataWrapper objectData = new ObjectDataWrapper(data);
+				TaskContext context = taskContextFactory.createTaskContext(jobId, reqId, objectData.getId(), connector);
+				Task job = jobFactory.newTask(context, params, objectData);
+				if (job.takesMuchTime()) {
+					LOG.info("Sending TaskAccepted (jobId={}, reqId={}, ObjectData={})", new Object[] {jobId, reqId, req.getObject()});
+					connector.sendTaskAccepted(jobId, reqId);
+				}
+
+				LOG.info("Processing task (jobId={}, reqId={})", jobId, reqId);
+				job.process();
+				LOG.debug("Task completed (jobId={}, reqId={})", jobId, reqId);
+
+				context.flush();
+				List<Long> newObjects = context.getAddedObjects();
+				LOG.debug("Sending TaskComplete (jobId={}, reqId={})", jobId, reqId);
+				if (context.hasWarnings()) {
+					connector.sendTaskCompletedWithWarnings(jobId, reqId, newObjects, context.getWarnings());
+				} else {
+					connector.sendTaskComplete(jobId, reqId, newObjects);
+				}
+				LOG.info("TaskComplete sent (jobId={}, reqId={}, newObjects.count={})", new Object[] { jobId, reqId, newObjects.size() });
+				LOG.debug("Task processing time: {} sec.", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - taskStartMilis));				
 			}
-			LOG.info("TaskComplete sent (jobId={}, reqId={}, newObjects.count={})", new Object[] { jobId, reqId, newObjects.size() });
-			LOG.debug("Task processing time: {} sec.", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - taskStartMilis));
+
 		} catch (RequiredParameterMissingException e) {
 			LOG.error("Required parameter missing (jobId={}, reqId={}): {}", new Object[] { jobId, reqId, e.getParamName() });
 			connector.sendTaskError(jobId, reqId, e);

@@ -24,23 +24,39 @@ import pl.nask.hsn2.bus.operations.JobStatus;
 /**
  * This is an interface for notifying about job processing.
  * 
- *
+ * 
  */
 public interface JobEventsNotifier {
 
 	/**
 	 * Notifies that job has been started.
 	 * 
-	 * @param jobId Job Identifier
+	 * @param jobId
+	 *            Job Identifier
 	 */
 	void jobStarted(long jobId);
-	
+
 	/**
 	 * Notifies that the job has finished.
 	 * 
-	 * @param jobId Job identifier
-	 * @param status Final status of the job
+	 * @param jobId
+	 *            Job identifier
+	 * @param status
+	 *            Final status of the job
 	 */
 	void jobFinished(long jobId, JobStatus status);
 
+	/**
+	 * Sends reminder that the job has finished already (or does not exists). Used in case when service (for any reason)
+	 * has not been informed that job is finished and is still processing tasks for it. Does not send more than one
+	 * reminder message per minute.
+	 * 
+	 * @param jobId
+	 *            Job identifier
+	 * @param status
+	 *            Final status of the job
+	 * @param offendingTask
+	 *            Task that raised notification
+	 */
+	void jobFinishedReminder(long jobId, JobStatus status, int offendingTask);
 }

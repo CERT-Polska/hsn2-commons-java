@@ -40,10 +40,13 @@ public class GenericService {
 	private String dataStoreAddress = null;
 	private String serviceQueueName = null;
     private String serviceName = null;
-    private String commonExchangeName;
+    private final String commonExchangeName;
+    private final String notifyExchangeName;
 
     private ExecutorService executor;
     private int maxThreads;
+    
+    private FinishedJobsListener finishedJobsListener;
 
     List<TaskProcessor> taskProcessors;
 
@@ -51,11 +54,11 @@ public class GenericService {
 
     private TaskContextFactory contextFactory;
 
-    public GenericService(TaskFactory jobFactory, Integer maxThreads, String rbtCommonExchangeName) {
-        this(jobFactory, null, maxThreads, rbtCommonExchangeName);
+    public GenericService(TaskFactory jobFactory, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
+        this(jobFactory, null, maxThreads, rbtCommonExchangeName, rbtNotifyExchangeName);
     }
 
-    public GenericService(TaskFactory jobFactory, TaskContextFactory contextFactory, Integer maxThreads, String rbtCommonExchangeName) {
+    public GenericService(TaskFactory jobFactory, TaskContextFactory contextFactory, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
         this.jobFactory = jobFactory;
         this.contextFactory = contextFactory;
         if (maxThreads == null || maxThreads == 0) {
@@ -66,6 +69,8 @@ public class GenericService {
         executor = Executors.newFixedThreadPool(this.maxThreads);
         taskProcessors = new ArrayList<TaskProcessor>(this.maxThreads);
         this.commonExchangeName = rbtCommonExchangeName;
+        this.notifyExchangeName = rbtNotifyExchangeName;
+        this.finishedJobsListener = new FinishedJobsListener();
     }
 
 	public void run() throws InterruptedException {
@@ -73,8 +78,11 @@ public class GenericService {
         for (Future<Void> res: results) {
             LOG.info("TaskProcessor {} started.", res);
         }
+
+		finishedJobsListener.initialize(connectorAddress, notifyExchangeName);
+		new Thread(finishedJobsListener).start();
     }
-	
+
 	List<Future<Void>> start() throws InterruptedException {
 		List<Future<Void>> results = new ArrayList<Future<Void>>(maxThreads);
 		for (int i=0; i<maxThreads; i++) {
@@ -82,7 +90,6 @@ public class GenericService {
             taskProcessors.add(processor);
             results.add(executor.submit(processor));
         }
-
 	    return results;
 	}
 	
@@ -97,9 +104,9 @@ public class GenericService {
     private TaskProcessor prepareTaskProcessor() {
         ServiceConnector connector = new ServiceConnectorImpl(connectorAddress, serviceQueueName, commonExchangeName, objectStoreQueueName, dataStoreAddress);
         if (contextFactory == null) {
-            return new TaskProcessor(jobFactory, connector);
+            return new TaskProcessor(jobFactory, connector, finishedJobsListener);
         } else {
-            return new TaskProcessor(jobFactory, connector, contextFactory);
+            return new TaskProcessor(jobFactory, connector, contextFactory, finishedJobsListener);
         }
     }
 
