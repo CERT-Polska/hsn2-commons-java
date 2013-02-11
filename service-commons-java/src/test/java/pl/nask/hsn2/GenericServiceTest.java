@@ -39,8 +39,8 @@ import pl.nask.hsn2.wrappers.ParametersWrapper;
 
 public class GenericServiceTest {
 	@Mocked
-	private ServiceConnectorImpl connector;		
-	
+	private ServiceConnectorImpl connector;
+
 	@SuppressWarnings("unchecked")
 	@Test()
 	public void testShutDown() throws Exception {
@@ -64,7 +64,7 @@ public class GenericServiceTest {
 				};
 			}
 		};			
-		
+
 		new NonStrictExpectations() {
 			{
 				connector.getTaskRequest();
@@ -74,7 +74,7 @@ public class GenericServiceTest {
 				result = ObjectResponse.newBuilder().setType(ResponseType.SUCCESS_GET).addData(ObjectData.newBuilder().setId(1)).build();
 			}
 		};
-		GenericService gs = new GenericService(jobFactory , 3, "");
+		GenericService gs = new GenericService(jobFactory , 3, "", "");
 		
 		Assert.assertEquals(counter.get(), 0);
 		

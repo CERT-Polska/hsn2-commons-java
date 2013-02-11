@@ -37,11 +37,13 @@ public class InConnector extends AbstractConnector {
 	private static final Logger LOGGER = LoggerFactory.getLogger(InConnector.class);
 
 	private long deliveryTag;
-	RbtDestination destination;
+	private final RbtDestination destination;
 
 	public InConnector(String connectorAddress, RbtDestination destination)  throws BusException {
 		super(connectorAddress, null, destination.getService());
 		this.destination = destination;
+		
+		LOGGER.info(InConnector.class.getName() + " created. ConnectorAddress={}, Destination={} " + this, connectorAddress, destination);
 	}
 
 	@Override
@@ -72,6 +74,14 @@ public class InConnector extends AbstractConnector {
 		}
 	}
 
+	public void ackLastMessage() {
+		try {
+			channel.basicAck(deliveryTag, false);
+		} catch (IOException e) {
+			LOGGER.error("Last message was not acked!", e);
+		}
+	}
+	
 	@Override
 	public byte[] receive() throws BusException {
 	    QueueingConsumer.Delivery delivery;

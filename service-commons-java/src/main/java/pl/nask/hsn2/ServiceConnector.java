@@ -74,5 +74,5 @@ public interface ServiceConnector {
 
     InputStream getDataStoreDataAsStream(long jobId, long referenceId) throws ResourceException, StorageException;
 
-	
+    void ignoreLastTaskRequest();
 }

@@ -29,6 +29,7 @@ import pl.nask.hsn2.bus.api.endpoint.EndPointFactory;
 import pl.nask.hsn2.bus.api.endpoint.FireAndForgetEndPoint;
 import pl.nask.hsn2.bus.connector.AbstractSerializableConnector;
 import pl.nask.hsn2.bus.operations.JobFinished;
+import pl.nask.hsn2.bus.operations.JobFinishedReminder;
 import pl.nask.hsn2.bus.operations.JobStarted;
 import pl.nask.hsn2.bus.operations.JobStatus;
 import pl.nask.hsn2.bus.operations.Operation;
@@ -71,5 +72,15 @@ public class DefaultJobEventsNotifier extends AbstractSerializableConnector impl
 		} catch (BusException e) {
 			LOGGER.error("Cant send out notification.", e);
 		}
+	}
+
+	@Override
+	public void jobFinishedReminder(long jobId, JobStatus status, int offendingTask) {
+		JobFinishedReminder reminder = new JobFinishedReminder(jobId);
+		reminder.setOffendingTask(offendingTask);
+		if (status != null) {
+			reminder.setStatus(status);
+		}
+		sendOut(reminder);
 	}
 }

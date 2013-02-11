@@ -38,11 +38,14 @@ import pl.nask.hsn2.task.TaskFactory;
 import pl.nask.hsn2.wrappers.ObjectDataWrapper;
 import pl.nask.hsn2.wrappers.ParametersWrapper;
 
+@SuppressWarnings("unchecked")
 @Test
 public class TaskProcessorTest {
 
     @Mocked
     private ServiceConnector connector;
+    //@Mocked
+    //private FinishedJobsListener finishedJobsListener;
 
     TaskFactory shortTaskFactory = new TaskFactory() {
         public Task newTask(TaskContext ctx, ParametersWrapper parameters, ObjectDataWrapper data) {
@@ -87,8 +90,8 @@ public class TaskProcessorTest {
     };
 
     // service receives TaskRequest, processes the job and sends TaskCompleted
-    public void testEmptyShortTask() throws Exception {
-        TaskProcessor processor = new TaskProcessor(shortTaskFactory, connector);
+	public void testEmptyShortTask() throws Exception {
+        TaskProcessor processor = new TaskProcessor(shortTaskFactory, connector, new FinishedJobsListener());
         new Expectations() {
             {
                 connector.getTaskRequest(); result=testRequest();
@@ -103,7 +106,7 @@ public class TaskProcessorTest {
 
     // service receives TastRequest, sends TaskAccepted, processes the job and sends TaskCompleted
     public void testEmptyLongTask() throws Exception {
-        TaskProcessor processor = new TaskProcessor(longTaskFactory, connector);
+        TaskProcessor processor = new TaskProcessor(longTaskFactory, connector, new FinishedJobsListener());
 
         new Expectations() {
             {
@@ -119,7 +122,7 @@ public class TaskProcessorTest {
 
     // service receives TastRequest, sends TaskAccepted, processes the job and sends TaskCompleted.
     public void testLongTask() throws Exception {
-        TaskProcessor processor = new TaskProcessor(normalJobFactory, connector);
+        TaskProcessor processor = new TaskProcessor(normalJobFactory, connector, new FinishedJobsListener());
         final List<Long> obs = new ArrayList<Long>();
         obs.add(1L);
         new Expectations() {
