@@ -58,7 +58,7 @@ public class ServiceConnectorImpl implements ServiceConnector {
 
     public ServiceConnectorImpl(String connectorAddress, String serviceQueueName, String commonExchangeName, String objectStoreQueueName, String dataStoreAddress) {
     	try {
-    		LOGGER.error("SERVICE QUEUE = {}", serviceQueueName);
+    		LOGGER.debug("SERVICE QUEUE = {}", serviceQueueName);
 			this.frameworkConnector = new InConnector(connectorAddress, new RbtDestination(commonExchangeName, serviceQueueName));
 			this.objectStoreConnector = new ObjectStoreConnectorImpl(connectorAddress, objectStoreQueueName);
 			this.dataStoreConnector = new DataStoreConnectorImpl(dataStoreAddress);
