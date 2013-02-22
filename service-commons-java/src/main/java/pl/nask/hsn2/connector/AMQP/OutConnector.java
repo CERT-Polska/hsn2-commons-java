@@ -63,6 +63,7 @@ public class OutConnector extends AbstractConnector {
 
 		try {
 			channel.basicPublish("", publisherQueueName, properties, msg);
+			LOGGER.debug("Message sent to {}, type: {}, corrId: {}", new Object[]{publisherQueueName,msgTypeName,corrId});
 		} catch (IOException e) {
 			throw new BusException("Can't send message.", e);
 		}
@@ -86,7 +87,7 @@ public class OutConnector extends AbstractConnector {
 			try {
 				return checkDeliveredMessage(delivery);
 			} catch (ResourceException e) {
-				LOGGER.info("Invalid correlationId");
+				LOGGER.info(e.getMessage());
 			}
 		}
 	}
@@ -101,7 +102,7 @@ public class OutConnector extends AbstractConnector {
 			return delivery.getBody();
 		}
 		else{
-			throw new ResourceException("Invalid correlationID");
+			throw new ResourceException("Invalid correlationID: " + corrId);
 		}
 	}
 
