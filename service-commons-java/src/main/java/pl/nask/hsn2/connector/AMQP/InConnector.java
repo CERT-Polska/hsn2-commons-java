@@ -30,7 +30,6 @@ import pl.nask.hsn2.connector.BusException;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.ShutdownSignalException;
 
 public class InConnector extends AbstractConnector {
 
@@ -87,8 +86,6 @@ public class InConnector extends AbstractConnector {
 	    QueueingConsumer.Delivery delivery;
 		try {
 			delivery = consumer.nextDelivery();
-		} catch (ShutdownSignalException e) {
-			throw new BusException("Broker has been closed.", e);
 		} catch (InterruptedException e) {
 			throw new BusException("Can't receive message.", e);
 		}

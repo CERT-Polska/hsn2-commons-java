@@ -19,7 +19,6 @@
 
 package pl.nask.hsn2;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -145,6 +144,10 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
 		} catch (StorageException e) {
 			logException("Error accessing storage", jobId, reqId, e);
 			connector.sendTaskError(jobId, reqId, e);
+		} catch (ShutdownSignalException e) {
+			LOG.warn("Broker has been closed. Service will be closed!");
+			LOG.debug(e.getMessage(),e);
+			setCanceled();
 		} catch (BusException e) {
 			logError("Communication error!", jobId, reqId, e);
 		} catch (InterruptedException e) {
@@ -169,7 +172,7 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
         return new TaskContext(jobId, reqId, objectDataId, connector);
     }
 
-    private ObjectData getDataFromObjectStore(long jobId, long objectId) throws StorageException, ShutdownSignalException, InterruptedException, IOException {
+    private ObjectData getDataFromObjectStore(long jobId, long objectId) throws StorageException, InterruptedException {
         List<Long> objectsId = new ArrayList<Long>();
         objectsId.add(objectId);
         List<ObjectData> objectDataList = getDataFromObjectStore(jobId, objectsId);
