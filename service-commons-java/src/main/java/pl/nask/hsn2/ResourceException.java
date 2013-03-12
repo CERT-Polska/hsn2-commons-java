@@ -19,17 +19,14 @@
 
 package pl.nask.hsn2;
 
-
 public class ResourceException extends Exception {
-
-
 	private static final long serialVersionUID = -5244655329797077725L;
 
 	public ResourceException(String msg, Throwable e) {
-        super(msg, e);
-    }
+		super(msg, e);
+	}
 
-    public ResourceException(String msg) {
-        super(msg);
-    }
+	public ResourceException(String msg) {
+		super(msg);
+	}
 }

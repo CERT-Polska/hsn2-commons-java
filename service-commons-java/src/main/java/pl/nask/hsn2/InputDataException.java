@@ -25,4 +25,8 @@ public class InputDataException extends Exception {
 	public InputDataException(String msg) {
 		super(msg);
 	}
+
+	public InputDataException(String msg, Throwable e) {
+		super(msg, e);
+	}
 }

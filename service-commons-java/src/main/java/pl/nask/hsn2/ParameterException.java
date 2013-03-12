@@ -20,16 +20,14 @@
 package pl.nask.hsn2;
 
 public class ParameterException extends Exception {
-
-
 	private static final long serialVersionUID = -5328278733233073118L;
 
 	public ParameterException(String msg) {
-        super(msg);
-    }
+		super(msg);
+	}
 
-    public ParameterException(String message, NumberFormatException e) {
-        super(message, e);
-    }
+	public ParameterException(String message, Throwable e) {
+		super(message, e);
+	}
 
 }
