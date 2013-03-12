@@ -147,7 +147,7 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
 		} catch (ShutdownSignalException e) {
 			LOG.warn("Broker has been closed. Service will be closed!");
 			LOG.debug(e.getMessage(),e);
-			setCanceled();
+			System.exit(5);
 		} catch (BusException e) {
 			logError("Communication error!", jobId, reqId, e);
 		} catch (InterruptedException e) {
