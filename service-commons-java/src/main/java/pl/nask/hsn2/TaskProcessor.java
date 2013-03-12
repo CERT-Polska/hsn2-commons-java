@@ -136,13 +136,13 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
 			LOG.error("Required parameter missing (jobId={}, reqId={}): {}", new Object[] { jobId, reqId, e.getParamName() });
 			connector.sendTaskError(jobId, reqId, e);
 		} catch (InputDataException e) {
-			logException("Input data error", jobId, reqId, e);
+			logError("Input data error", jobId, reqId, e);
 			connector.sendTaskError(jobId, reqId, e);
 		} catch (ResourceException e) {
-			logException("Error accessing resource", jobId, reqId, e);
+			logError("Error accessing resource", jobId, reqId, e);
 			connector.sendTaskError(jobId, reqId, e);
 		} catch (StorageException e) {
-			logException("Error accessing storage", jobId, reqId, e);
+			logError("Error accessing storage", jobId, reqId, e);
 			connector.sendTaskError(jobId, reqId, e);
 		} catch (ShutdownSignalException e) {
 			LOG.warn("Broker has been closed. Service will be closed!");
@@ -191,10 +191,5 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
         } catch (StorageException e) {
             throw new StorageException(String.format("Cannot retrieve ObjectData from object store, jobId=%s, dataId=%s", jobId, objectsId), e);
         }
-    }
-
-    private void logException(String msg, long jobId, int reqId, Exception e) {
-        LOG.error("{} (jobId={}, reqId={}): {}", new Object[]{msg, jobId, reqId, e.getMessage()});
-        LOG.debug(msg, e);
     }
 }
