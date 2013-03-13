@@ -30,7 +30,6 @@ import pl.nask.hsn2.connector.BusException;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.ShutdownSignalException;
 
 public class OutConnector extends AbstractConnector {
 
@@ -63,6 +62,7 @@ public class OutConnector extends AbstractConnector {
 
 		try {
 			channel.basicPublish("", publisherQueueName, properties, msg);
+			LOGGER.debug("Message sent to {}, type: {}, corrId: {}", new Object[]{publisherQueueName,msgTypeName,corrId});
 		} catch (IOException e) {
 			throw new BusException("Can't send message.", e);
 		}
@@ -77,8 +77,6 @@ public class OutConnector extends AbstractConnector {
 		while(true){
 			try {
 				delivery = consumer.nextDelivery();
-			} catch (ShutdownSignalException e) {
-				throw new BusException("Broker has been closed.", e);
 			} catch (InterruptedException e) {
 				throw new BusException("Can't receive message.", e);
 			}
@@ -86,7 +84,7 @@ public class OutConnector extends AbstractConnector {
 			try {
 				return checkDeliveredMessage(delivery);
 			} catch (ResourceException e) {
-				LOGGER.info("Invalid correlationId");
+				LOGGER.info(e.getMessage());
 			}
 		}
 	}
@@ -101,7 +99,7 @@ public class OutConnector extends AbstractConnector {
 			return delivery.getBody();
 		}
 		else{
-			throw new ResourceException("Invalid correlationID");
+			throw new ResourceException("Invalid correlationID: " + corrId);
 		}
 	}
 
