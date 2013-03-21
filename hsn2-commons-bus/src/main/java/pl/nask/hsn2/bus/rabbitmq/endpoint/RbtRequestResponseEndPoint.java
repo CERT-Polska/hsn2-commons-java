@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import pl.nask.hsn2.bus.api.BusException;
 import pl.nask.hsn2.bus.api.Message;
 import pl.nask.hsn2.bus.api.TimeoutException;
@@ -33,7 +36,8 @@ import pl.nask.hsn2.bus.rabbitmq.RbtUtils;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.GetResponse;
+import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.QueueingConsumer.Delivery;
 
 /**
  * This is RabbitMQ implementation of <code>RequestResponseEndPoint</code>.
@@ -44,11 +48,13 @@ import com.rabbitmq.client.GetResponse;
  *
  */
 public class RbtRequestResponseEndPoint implements RequestResponseEndPoint {
+	private static final Logger LOGGER = LoggerFactory.getLogger(RequestResponseEndPoint.class);
 	private static final String DEFAULT_CONTENT_TYPE = "application/hsn2+protobuf";
 	private static final int DEFAULT_WAIT = 300; // 5 min
 
 	private Connection connection;
 	private Channel channel = null;
+	private QueueingConsumer consumer = null;
 	private boolean closed = true;
 	private final String responseQueue = "tmp-" + java.util.UUID.randomUUID().toString();
 	private int timeout = DEFAULT_WAIT;
@@ -86,6 +92,9 @@ public class RbtRequestResponseEndPoint implements RequestResponseEndPoint {
 				channel.basicQos(1);
 				Map<String, Object> args = new HashMap<String, Object>();
 				channel.queueDeclare(responseQueue, false, true, true, args);
+				consumer = new QueueingConsumer(channel);
+				channel.basicConsume(responseQueue, true, Thread.currentThread().getName(), false, true, null, consumer);
+				LOGGER.info("Response queue was created: {}", responseQueue);
 			} catch (IOException e) {
 				throw new BusException("Can't create channel.", e);
 			}
@@ -104,13 +113,15 @@ public class RbtRequestResponseEndPoint implements RequestResponseEndPoint {
 	@Override
 	public final Message sendAndGet(Message message) throws BusException {
 		BasicProperties.Builder propertiesBuilder = new BasicProperties.Builder()
-		.contentType(DEFAULT_CONTENT_TYPE)
-		.type(message.getType())
-		.replyTo(responseQueue);
+			.contentType(DEFAULT_CONTENT_TYPE)
+			.type(message.getType())
+			.replyTo(responseQueue);
+		
+		String correlationId = message.getCorrelationId();
 		
 		// setup correct correlation id if provided
-		if (message.getCorrelationId() != null && !"".equals(message.getCorrelationId())) {
-			propertiesBuilder.correlationId(message.getCorrelationId());
+		if (correlationId != null && !correlationId.isEmpty()) {
+			propertiesBuilder.correlationId(correlationId);
 		}
 		
 		String destinationRoutingKey = message.getDestination().getService();
@@ -119,27 +130,26 @@ public class RbtRequestResponseEndPoint implements RequestResponseEndPoint {
 		
 		try {
 			channel.basicPublish(destinationExchange, destinationRoutingKey, propertiesBuilder.build(), message.getBody());
+			LOGGER.info("Message to {} was sent. type: {} corrID: {}", new Object[]{destinationRoutingKey, message.getType(), correlationId});
 			
-			long currTime = System.currentTimeMillis();
-			
-			GetResponse response = null;
-
-			while (response == null  && System.currentTimeMillis() < currTime + ((long)timeout) * 1000) {
-				response = channel.basicGet(responseQueue, true);
-			}
+			for(int i = 0; i <= 1; i++){
+				Delivery response = consumer.nextDelivery(timeout * 1000);
 				
-			if (response == null) {
-				throw new TimeoutException("Cannot get message, timeout after " + timeout + " seconds!");
+				if (response != null) {
+					return new Message(
+						response.getProperties().getType(),
+						response.getBody(),
+						response.getProperties().getCorrelationId(),
+						new RbtDestination(response.getProperties().getReplyTo()));
+				}
+				else{
+					LOGGER.warn("Cannot get message after {} sec! Try one more time to get message from: {}!", timeout, responseQueue);
+				}
 			}
-
-			return new Message(
-					response.getProps().getType(),
-					response.getBody(),
-					response.getProps().getCorrelationId(),
-					new RbtDestination(response.getProps().getReplyTo()));
+			throw new TimeoutException("Cannot get message, timeout after " + 2 * timeout + " seconds!");
 		}
-		catch (IOException e) {
-			throw new BusException("Cannot sent message!", e);
+		catch (IOException | InterruptedException e) {
+			throw new BusException("Cannot sent message or receive response!", e);
 		}
 	}
 
