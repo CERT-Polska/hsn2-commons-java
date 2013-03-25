@@ -166,7 +166,7 @@ public class DataStoreConnectorImpl implements DataStoreConnector {
             inputStream = client.getInputStream();
             LOGGER.debug(client.getResponseMessage());
             if (client.getResponseCode() == SC_OK) {
-                return buildMessageObject(IOUtils.toByteArray(inputStream), msgType);
+                return buildMessageObject(inputStream, msgType);
             } else {
                 throw new StorageException("Error getting object from DataStore: " + msg(inputStream));
             }
@@ -177,13 +177,13 @@ public class DataStoreConnectorImpl implements DataStoreConnector {
         }
 	}
 
-	private GeneratedMessage buildMessageObject(byte[] is, String msgType) {
+	private GeneratedMessage buildMessageObject(InputStream is, String msgType) {
 
 	    Class<GeneratedMessage> clazz = null;
         try {
             clazz = (Class<GeneratedMessage>) Class.forName("pl.nask.hsn2.protobuff.Resources$" + msgType);
 
-            Method parseFrom = clazz.getMethod("parseFrom", byte[].class);
+            Method parseFrom = clazz.getMethod("parseFrom", InputStream.class);
             GeneratedMessage msg = (GeneratedMessage) parseFrom.invoke(null, is);
 
             return msg;

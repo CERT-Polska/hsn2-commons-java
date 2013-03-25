@@ -20,8 +20,9 @@
 package pl.nask.hsn2.bus.rabbitmq.endpoint;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import pl.nask.hsn2.bus.api.BusException;
 import pl.nask.hsn2.bus.api.Message;
@@ -44,6 +45,7 @@ import com.rabbitmq.client.GetResponse;
  *
  */
 public class RbtRequestResponseEndPoint implements RequestResponseEndPoint {
+	private static final Logger LOGGER = LoggerFactory.getLogger(RequestResponseEndPoint.class);
 	private static final String DEFAULT_CONTENT_TYPE = "application/hsn2+protobuf";
 	private static final int DEFAULT_WAIT = 300; // 5 min
 
@@ -84,8 +86,8 @@ public class RbtRequestResponseEndPoint implements RequestResponseEndPoint {
 			try {
 				channel = connection.createChannel();
 				channel.basicQos(1);
-				Map<String, Object> args = new HashMap<String, Object>();
-				channel.queueDeclare(responseQueue, false, true, true, args);
+				channel.queueDeclare(responseQueue, false, true, true, null);
+				LOGGER.info("Response queue was created: {}", responseQueue);
 			} catch (IOException e) {
 				throw new BusException("Can't create channel.", e);
 			}
@@ -104,13 +106,15 @@ public class RbtRequestResponseEndPoint implements RequestResponseEndPoint {
 	@Override
 	public final Message sendAndGet(Message message) throws BusException {
 		BasicProperties.Builder propertiesBuilder = new BasicProperties.Builder()
-		.contentType(DEFAULT_CONTENT_TYPE)
-		.type(message.getType())
-		.replyTo(responseQueue);
+			.contentType(DEFAULT_CONTENT_TYPE)
+			.type(message.getType())
+			.replyTo(responseQueue);
+		
+		String correlationId = message.getCorrelationId();
 		
 		// setup correct correlation id if provided
-		if (message.getCorrelationId() != null && !"".equals(message.getCorrelationId())) {
-			propertiesBuilder.correlationId(message.getCorrelationId());
+		if (correlationId != null && !correlationId.isEmpty()) {
+			propertiesBuilder.correlationId(correlationId);
 		}
 		
 		String destinationRoutingKey = message.getDestination().getService();
@@ -119,27 +123,32 @@ public class RbtRequestResponseEndPoint implements RequestResponseEndPoint {
 		
 		try {
 			channel.basicPublish(destinationExchange, destinationRoutingKey, propertiesBuilder.build(), message.getBody());
-			
-			long currTime = System.currentTimeMillis();
-			
-			GetResponse response = null;
+			LOGGER.info("Message to {} was sent. type: {} corrID: {}", new Object[]{destinationRoutingKey, message.getType(), correlationId});
+			int i = 0;
+			for(; i <= 1; i++){
+				long currTime = System.currentTimeMillis();
 
-			while (response == null  && System.currentTimeMillis() < currTime + ((long)timeout) * 1000) {
-				response = channel.basicGet(responseQueue, true);
-			}
+				GetResponse response = null;
+
+				while (response == null  && System.currentTimeMillis() < currTime + ((long)timeout) * 1000) {
+					response = channel.basicGet(responseQueue, true);
+				}
 				
-			if (response == null) {
-				throw new TimeoutException("Cannot get message, timeout after " + timeout + " seconds!");
+				if (response != null) {
+					return new Message(
+						response.getProps().getType(),
+						response.getBody(),
+						response.getProps().getCorrelationId(),
+						new RbtDestination(response.getProps().getReplyTo()));
+				}
+				else{
+					LOGGER.warn("Cannot get message after {} sec! Try one more time to get message from: {}!", timeout, responseQueue);
+				}
 			}
-
-			return new Message(
-					response.getProps().getType(),
-					response.getBody(),
-					response.getProps().getCorrelationId(),
-					new RbtDestination(response.getProps().getReplyTo()));
+			throw new TimeoutException("Cannot get message, timeout after " + i * timeout + " seconds!");
 		}
 		catch (IOException e) {
-			throw new BusException("Cannot sent message!", e);
+			throw new BusException("Cannot sent message or receive response!", e);
 		}
 	}
 

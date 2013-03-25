@@ -240,7 +240,7 @@ public class DefaultObjectStoreConnector extends AbstractSerializableConnector i
 			
 			Message response = requestResponseEndPoint.sendAndGet(request);
 
-			LOGGER.debug("Got response from OS for {}", objectRequest.getRequestType());
+			LOGGER.info("Got response from OS for {}, corrID: {}", objectRequest.getRequestType(), correlationId);
 			LOGGER.trace("Response message from OS: {}", response);
 			
 			if (!correlationId.equals(response.getCorrelationId())) {
