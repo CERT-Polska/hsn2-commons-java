@@ -111,4 +111,12 @@ public class StubFrameworkConnector implements FrameworkConnector {
 			throws FrameworkConnectorException {
 		return false;
 	}
+
+	@Override
+	public void shutdownConnector() {
+		// TODO Auto-generated method stub
+		throw new IllegalStateException("Not implemented!.");
+		
+	}
+
 }

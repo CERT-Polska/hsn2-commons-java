@@ -69,4 +69,11 @@ public class StubProcessConnector implements ProcessConnector {
 	public void sendTaskCompleted(long jobId, int taskId, Set<Long> objects,
 			List<String> warnings) throws ProcessConnectorException {
 	}
+
+	@Override
+	public void shutdownConnector() {
+	
+		throw new IllegalStateException("Method unimplemented");
+		
+	}
 }

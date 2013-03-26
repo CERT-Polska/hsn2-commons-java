@@ -94,4 +94,12 @@ public class StubObjectStoreConnector implements ObjectStoreConnector {
 			throws ObjectStoreConnectorException {
 	}
 
+	@Override
+	public void shutdownConnector() {
+		// TODO Auto-generated method stub
+		throw new IllegalStateException("Not implemented!.");
+		
+	}
+
+
 }

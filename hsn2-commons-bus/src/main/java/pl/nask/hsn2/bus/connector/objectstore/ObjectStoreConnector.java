@@ -22,6 +22,7 @@ package pl.nask.hsn2.bus.connector.objectstore;
 import java.util.Collection;
 import java.util.Set;
 
+import pl.nask.hsn2.bus.connector.AbstractServicesConnector;
 import pl.nask.hsn2.bus.operations.JobStatus;
 import pl.nask.hsn2.bus.operations.ObjectData;
 
@@ -34,7 +35,7 @@ import pl.nask.hsn2.bus.operations.ObjectData;
  * 
  *
  */
-public interface ObjectStoreConnector {
+public interface ObjectStoreConnector extends AbstractServicesConnector{
 
 	/**
 	 * Creating single job object in Object Store.

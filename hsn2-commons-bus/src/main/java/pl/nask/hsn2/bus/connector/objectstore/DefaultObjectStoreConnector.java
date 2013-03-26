@@ -288,4 +288,15 @@ public class DefaultObjectStoreConnector extends AbstractSerializableConnector i
 		}
 	}
 
+	@Override
+	public void shutdownConnector() {
+		try {
+			notificationEndPoint.close();
+		} catch (BusException e) {
+			LOGGER.warn("Closing failed.",e);
+		}
+		
+	}
+
+
 }

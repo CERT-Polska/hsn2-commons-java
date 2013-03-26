@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import pl.nask.hsn2.bus.connector.AbstractServicesConnector;
 import pl.nask.hsn2.bus.operations.JobInfo;
 import pl.nask.hsn2.bus.operations.ObjectData;
 import pl.nask.hsn2.bus.operations.WorkflowBasicInfo;
@@ -32,7 +33,7 @@ import pl.nask.hsn2.bus.operations.WorkflowBasicInfo;
  *  
  *
  */
-public interface FrameworkConnector {
+public interface FrameworkConnector extends AbstractServicesConnector{
 
 	/**
 	 * Sends JobDescriptor operation to the framework.

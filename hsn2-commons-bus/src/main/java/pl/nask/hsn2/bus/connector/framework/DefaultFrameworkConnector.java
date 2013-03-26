@@ -248,4 +248,16 @@ public class DefaultFrameworkConnector extends AbstractSerializableConnector imp
 			throw new FrameworkConnectorException(e);
 		}
 	}
+
+	@Override
+	public void shutdownConnector() {
+		try {
+			endPoint.close();
+		} catch (BusException e) {
+			LOGGER.warn("Closing failed.",e);
+		}
+		
+		
+	}
+
 }
