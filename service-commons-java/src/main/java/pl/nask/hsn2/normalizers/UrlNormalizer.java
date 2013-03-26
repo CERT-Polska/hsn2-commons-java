@@ -180,15 +180,7 @@ public class UrlNormalizer {
 					toProcess.delete(0, internalURI.userInfo.length()+1);
 					break;
 				}
-				String host = null;
-				try{
-					host = URLNormalizerUtils.decodeIPv4(toProcess, 0, m);
-				} catch (URLHostParseException e) {
-					LOG.debug("Not an IPv4:'{}', trying DNS.",toProcess.toString());
-				}
-				if ( host == null) {
-					host = URLNormalizerUtils.dnsToIDN(toProcess, 0, m);
-				}
+				String host = buildHostname(m);		
 				internalURI.host = host;
 				toProcess.delete(0, host.length());
 				if (toProcess.length() == 0) {
@@ -237,6 +229,10 @@ public class UrlNormalizer {
 			}
 			break;
 			case '?': {
+				if ( internalURI.host == null ) {
+					internalURI.host = buildHostname(i);
+					toProcess.delete(0, internalURI.host.length());
+				}
 				if (internalURI.path == null) {
 					internalURI.path = "/";
 				}
@@ -252,6 +248,10 @@ public class UrlNormalizer {
 					toProcess.delete(0, internalURI.userInfo.length()+1);
 				break;
 			case '#':
+				if ( internalURI.host == null ) { 
+					internalURI.host = buildHostname(i);
+					toProcess.delete(0, internalURI.host.length());
+				}
 				if ( internalURI.path == null) {
 					internalURI.path = "/";
 				}
@@ -312,6 +312,20 @@ public class UrlNormalizer {
 		
 		processURL();
 		
+	}
+	private String buildHostname(int m) throws URLHostParseException {
+		String host = null;
+		try{
+			host = URLNormalizerUtils.decodeIPv4(toProcess, 0, m);
+		} catch (URLHostParseException e) {
+			LOG.debug("Not an IPv4:'{}', trying DNS.",toProcess.toString());
+		}
+		if ( host == null) {
+			host = URLNormalizerUtils.dnsToIDN(toProcess, 0, m);
+		}
+		if ( host == null)
+			throw new URLHostParseException("Cannot process host part from:"+original);
+		return host;
 	}
 	
 	//access for tests only
