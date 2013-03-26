@@ -111,12 +111,15 @@ public abstract class AbstractPooledEndPoint {
 			try {
 				executor.shutdown();
 				executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS);
-				executor = null;
+				
 			} catch (InterruptedException e) {
 				// not important in this case
+			} finally {
+				closed = true;
+				executor = null;
 			}
 		}
-		closed = true;
+		
 	}
 
 	/**
