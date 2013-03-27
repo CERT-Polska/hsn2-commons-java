@@ -71,7 +71,7 @@ public class StubProcessConnector implements ProcessConnector {
 	}
 
 	@Override
-	public void shutdownConnector() {
+	public void releaseResources() {
 	
 		throw new IllegalStateException("Method unimplemented");
 		

@@ -289,7 +289,7 @@ public class DefaultObjectStoreConnector extends AbstractSerializableConnector i
 	}
 
 	@Override
-	public void shutdownConnector() {
+	public void releaseResources() {
 		try {
 			notificationEndPoint.close();
 		} catch (BusException e) {

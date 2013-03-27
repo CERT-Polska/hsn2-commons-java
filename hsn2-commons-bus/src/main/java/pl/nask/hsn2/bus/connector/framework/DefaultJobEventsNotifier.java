@@ -85,7 +85,7 @@ public class DefaultJobEventsNotifier extends AbstractSerializableConnector impl
 	}
 
 	@Override
-	public void shutdownConnector() {
+	public void releaseResources() {
 		try {
 			notifyEndPoint.close();
 		} catch (BusException e) {

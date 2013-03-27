@@ -250,7 +250,7 @@ public class DefaultFrameworkConnector extends AbstractSerializableConnector imp
 	}
 
 	@Override
-	public void shutdownConnector() {
+	public void releaseResources() {
 		try {
 			endPoint.close();
 		} catch (BusException e) {

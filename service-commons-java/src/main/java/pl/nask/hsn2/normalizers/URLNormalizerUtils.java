@@ -97,7 +97,7 @@ final public class URLNormalizerUtils {
     }
 
     public static String dnsToIDN(StringBuilder str, int startIndx, int endIndx) throws URLHostParseException {
-    	if (str.length() == 0) {
+    	if (str.length() == 0 || startIndx == endIndx) {
     		throw new URLHostParseException("Cannot process empty string");
     	}
         if (endIndx > str.length()) {

@@ -36,7 +36,7 @@ public class StubJobEventsNotifier implements JobEventsNotifier {
 	}
 
 	@Override
-	public void shutdownConnector() {
+	public void releaseResources() {
 		// TODO Auto-generated method stub
 		throw new IllegalStateException("Not implemented!.");
 		

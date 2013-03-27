@@ -136,6 +136,8 @@ public class UrlNormalizerTest {
 			  ,{"http://032423262145/a","http://212.77.100.101/a"}
 			  ,{"http://0xd44d6465/","http://212.77.100.101/"}
 			  ,{"A","http://a/"}
+			  ,{"hTTp://a?","http://a/?"}
+			  ,{"httpS://a#","https://a/#"}
 			  ,{"%41","http://a/"}
 			  ,{"htTp://0xc0A80001:8080","http://192.168.0.1:8080/"}
 			  ,{"http://test@0xc0A80001:8080","http://test@192.168.0.1:8080/"}

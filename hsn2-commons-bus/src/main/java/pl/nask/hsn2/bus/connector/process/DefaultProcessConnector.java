@@ -244,7 +244,7 @@ public class DefaultProcessConnector extends AbstractSerializableConnector imple
     }
 
 	@Override
-	public void shutdownConnector() {
+	public void releaseResources() {
 		try {
 			notificationEndPoint.close();
 		} catch (BusException e) {

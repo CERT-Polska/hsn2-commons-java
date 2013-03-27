@@ -27,6 +27,6 @@ public interface AbstractServicesConnector {
 	 * Release any resources held by this object.
 	 * @throws BusException
 	 */
-	void shutdownConnector();
+	void releaseResources();
 
 }
