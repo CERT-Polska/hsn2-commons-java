@@ -180,15 +180,7 @@ public class UrlNormalizer {
 					toProcess.delete(0, internalURI.userInfo.length()+1);
 					break;
 				}
-				String host = null;
-				try{
-					host = URLNormalizerUtils.decodeIPv4(toProcess, 0, m);
-				} catch (URLHostParseException e) {
-					LOG.debug("Not an IPv4:'{}', trying DNS.",toProcess.toString());
-				}
-				if ( host == null) {
-					host = URLNormalizerUtils.dnsToIDN(toProcess, 0, m);
-				}
+				String host = buildHostname(m);		
 				internalURI.host = host;
 				toProcess.delete(0, host.length());
 				if (toProcess.length() == 0) {
@@ -237,9 +229,7 @@ public class UrlNormalizer {
 			}
 			break;
 			case '?': {
-				if (internalURI.path == null) {
-					internalURI.path = "/";
-				}
+				checkHostAndPath(i);
 				internalURI.query = URLNormalizerUtils.normalizeQuery(toProcess, 0, toProcess.length());
 				toProcess.delete(0, internalURI.query.length());
 				if (toProcess.length() == 0) {
@@ -252,9 +242,7 @@ public class UrlNormalizer {
 					toProcess.delete(0, internalURI.userInfo.length()+1);
 				break;
 			case '#':
-				if ( internalURI.path == null) {
-					internalURI.path = "/";
-				}
+				checkHostAndPath(i);
 				internalURI.fragment = URLNormalizerUtils.normalizeFragment(toProcess, 0, toProcess.length());
 				toProcess.delete(0, toProcess.length());
 				internalURI.processed = true;
@@ -312,6 +300,29 @@ public class UrlNormalizer {
 		
 		processURL();
 		
+	}
+	private void checkHostAndPath(int i) throws URLHostParseException {
+		if ( internalURI.host == null ) { 
+			internalURI.host = buildHostname(i);
+			toProcess.delete(0, internalURI.host.length());
+		}
+		if ( internalURI.path == null) {
+			internalURI.path = "/";
+		}
+	}
+	private String buildHostname(int m) throws URLHostParseException {
+		String host = null;
+		try{
+			host = URLNormalizerUtils.decodeIPv4(toProcess, 0, m);
+		} catch (URLHostParseException e) {
+			LOG.debug("Not an IPv4:'{}', trying DNS.",toProcess.toString());
+		}
+		if ( host == null) {
+			host = URLNormalizerUtils.dnsToIDN(toProcess, 0, m);
+		}
+		if ( host == null)
+			throw new URLHostParseException("Cannot process host part from:"+original);
+		return host;
 	}
 	
 	//access for tests only
