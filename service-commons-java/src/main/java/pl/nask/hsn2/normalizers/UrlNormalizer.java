@@ -229,13 +229,7 @@ public class UrlNormalizer {
 			}
 			break;
 			case '?': {
-				if ( internalURI.host == null ) {
-					internalURI.host = buildHostname(i);
-					toProcess.delete(0, internalURI.host.length());
-				}
-				if (internalURI.path == null) {
-					internalURI.path = "/";
-				}
+				checkHostAndPath(i);
 				internalURI.query = URLNormalizerUtils.normalizeQuery(toProcess, 0, toProcess.length());
 				toProcess.delete(0, internalURI.query.length());
 				if (toProcess.length() == 0) {
@@ -248,13 +242,7 @@ public class UrlNormalizer {
 					toProcess.delete(0, internalURI.userInfo.length()+1);
 				break;
 			case '#':
-				if ( internalURI.host == null ) { 
-					internalURI.host = buildHostname(i);
-					toProcess.delete(0, internalURI.host.length());
-				}
-				if ( internalURI.path == null) {
-					internalURI.path = "/";
-				}
+				checkHostAndPath(i);
 				internalURI.fragment = URLNormalizerUtils.normalizeFragment(toProcess, 0, toProcess.length());
 				toProcess.delete(0, toProcess.length());
 				internalURI.processed = true;
@@ -312,6 +300,15 @@ public class UrlNormalizer {
 		
 		processURL();
 		
+	}
+	private void checkHostAndPath(int i) throws URLHostParseException {
+		if ( internalURI.host == null ) { 
+			internalURI.host = buildHostname(i);
+			toProcess.delete(0, internalURI.host.length());
+		}
+		if ( internalURI.path == null) {
+			internalURI.path = "/";
+		}
 	}
 	private String buildHostname(int m) throws URLHostParseException {
 		String host = null;
