@@ -101,7 +101,9 @@ public class RecoveryMonitor {
 		if (recoveryMonitorThread != null) {
 			while (recoveryMonitorThread.isAlive()) {
 				try {
-					Thread.sleep(50);
+					final int sleepInterval_ = 50;
+					LOGGER.info("Waiting {}ms for RecoveryMonitor to stop.",sleepInterval_);
+					Thread.sleep(sleepInterval_);
 				} catch(InterruptedException ex) {
 					// nothing to do
 				}
@@ -155,6 +157,7 @@ public class RecoveryMonitor {
 					}
 				} catch (InterruptedException e) {
 					LOGGER.debug("Recovery monitor interrupted!");
+					Thread.currentThread().interrupt();
 					synchronized (mutex) { running = false; }
 				}
 			}
