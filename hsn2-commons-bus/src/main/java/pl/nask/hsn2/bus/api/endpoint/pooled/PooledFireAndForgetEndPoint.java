@@ -22,6 +22,8 @@ package pl.nask.hsn2.bus.api.endpoint.pooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rabbitmq.client.AlreadyClosedException;
+
 import pl.nask.hsn2.bus.api.BusException;
 import pl.nask.hsn2.bus.api.Message;
 import pl.nask.hsn2.bus.api.endpoint.FireAndForgetEndPoint;
@@ -43,7 +45,6 @@ public class PooledFireAndForgetEndPoint extends AbstractPooledEndPoint implemen
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(PooledFireAndForgetEndPoint.class);
 	
-	private PooledNEPCreateCallback createCallback;
 	private long timeout = DEFAULT_TIMEOUT;
 	
 	private final FireAndForgetEndPoint endPoint;
@@ -57,7 +58,6 @@ public class PooledFireAndForgetEndPoint extends AbstractPooledEndPoint implemen
 	 */
 	public PooledFireAndForgetEndPoint(PooledNEPCreateCallback createCallback)
 				throws BusException {
-		this.createCallback = createCallback;
 		endPoint = createCallback.create();
 		super.open();
 	}
@@ -73,7 +73,6 @@ public class PooledFireAndForgetEndPoint extends AbstractPooledEndPoint implemen
 	public PooledFireAndForgetEndPoint(int maxThreads, PooledNEPCreateCallback createCallback)
 				throws BusException {
 		super(maxThreads);
-		this.createCallback = createCallback;
 		endPoint = createCallback.create();
 		super.open();
 	}
@@ -86,7 +85,7 @@ public class PooledFireAndForgetEndPoint extends AbstractPooledEndPoint implemen
 			public void run() {
 				try {
 					endPoint.sendNotify(message);
-				} catch (BusException e) {
+				} catch (BusException | AlreadyClosedException e) {
 					LOGGER.error("Cannot process message", e);
 				}
 			}

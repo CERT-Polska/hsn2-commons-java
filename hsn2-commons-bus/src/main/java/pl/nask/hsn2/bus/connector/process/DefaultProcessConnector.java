@@ -242,4 +242,14 @@ public class DefaultProcessConnector extends AbstractSerializableConnector imple
     	msg.setReplyTo(replyTo);
     	return msg;
     }
+
+	@Override
+	public void releaseResources() {
+		try {
+			notificationEndPoint.close();
+		} catch (BusException e) {
+			LOGGER.warn("Close failed.",e);
+		}
+		
+	}
 }

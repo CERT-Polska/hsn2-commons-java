@@ -17,28 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package pl.nask.hsn2.bus.connector.framework;
+package pl.nask.hsn2.bus.connector;
 
-import pl.nask.hsn2.bus.operations.JobStatus;
 
-public class StubJobEventsNotifier implements JobEventsNotifier {
+public interface AbstractServicesConnector {
+	
+	
+	/**
+	 * Release any resources held by this object.
+	 * @throws BusException
+	 */
+	void releaseResources();
 
-	@Override
-	public void jobStarted(long jobId) {
-	}
-
-	@Override
-	public void jobFinished(long jobId, JobStatus status) {
-	}
-
-	@Override
-	public void jobFinishedReminder(long jobId, JobStatus status, int offendingTask) {
-	}
-
-	@Override
-	public void releaseResources() {
-		// TODO Auto-generated method stub
-		throw new IllegalStateException("Not implemented!.");
-		
-	}
 }
