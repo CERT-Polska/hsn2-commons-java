@@ -99,16 +99,16 @@ public class RecoveryMonitor {
 			}
 		}
 		if (recoveryMonitorThread != null) {
+			LOGGER.info("Waiting for RecoveryMonitor to stop.");
 			while (recoveryMonitorThread.isAlive()) {
 				try {
-					final int sleepInterval_ = 50;
-					LOGGER.info("Waiting {}ms for RecoveryMonitor to stop.",sleepInterval_);
-					Thread.sleep(sleepInterval_);
+					Thread.sleep(50);
 				} catch(InterruptedException ex) {
 					// nothing to do
 				}
 			}
 			this.recoveryMonitorThread = null;
+			LOGGER.info("RecoveryMonitor stopped.");
 		}
 	}
 
