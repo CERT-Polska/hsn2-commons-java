@@ -213,10 +213,10 @@ public class RbtEndPointFactory implements EndPointFactory {
 	 */
 	public void reconnect() throws BusException {
 		try {
-			LOGGER.debug("(Re)connecting to Rabbit MQ server.");
+			LOGGER.info("(Re)connecting to Rabbit MQ server.");
 			RbtUtils.closeConnection(this.connection);
 			this.connection = factory.newConnection(new ConfigurableExecutorService("rbt-consumer-", numberOfconsumerThreads));			
-			LOGGER.debug("Connected to Rabbit MQ server.");
+			LOGGER.info("Connected to Rabbit MQ server.");
 		} catch (IOException e) {
 			throw new BusException("Cannot connect to Rabbit MQ server.", e);
 		}

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import pl.nask.hsn2.bus.connector.AbstractServicesConnector;
 import pl.nask.hsn2.bus.operations.TaskErrorReasonType;
 
 /**
@@ -30,7 +31,7 @@ import pl.nask.hsn2.bus.operations.TaskErrorReasonType;
  * 
  *
  */
-public interface ProcessConnector {
+public interface ProcessConnector extends AbstractServicesConnector{
 
 	/**
 	 * Sends <code>TaskRequest</code> operation with no additional parameters.

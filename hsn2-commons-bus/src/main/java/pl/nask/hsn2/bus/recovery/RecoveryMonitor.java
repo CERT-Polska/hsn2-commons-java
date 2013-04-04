@@ -99,6 +99,7 @@ public class RecoveryMonitor {
 			}
 		}
 		if (recoveryMonitorThread != null) {
+			LOGGER.info("Waiting for RecoveryMonitor to stop.");
 			while (recoveryMonitorThread.isAlive()) {
 				try {
 					Thread.sleep(50);
@@ -107,6 +108,7 @@ public class RecoveryMonitor {
 				}
 			}
 			this.recoveryMonitorThread = null;
+			LOGGER.info("RecoveryMonitor stopped.");
 		}
 	}
 
@@ -155,6 +157,7 @@ public class RecoveryMonitor {
 					}
 				} catch (InterruptedException e) {
 					LOGGER.debug("Recovery monitor interrupted!");
+					Thread.currentThread().interrupt();
 					synchronized (mutex) { running = false; }
 				}
 			}

@@ -19,6 +19,7 @@
 
 package pl.nask.hsn2.bus.connector.framework;
 
+import pl.nask.hsn2.bus.connector.AbstractServicesConnector;
 import pl.nask.hsn2.bus.operations.JobStatus;
 
 /**
@@ -26,7 +27,7 @@ import pl.nask.hsn2.bus.operations.JobStatus;
  * 
  * 
  */
-public interface JobEventsNotifier {
+public interface JobEventsNotifier extends AbstractServicesConnector{
 
 	/**
 	 * Notifies that job has been started.

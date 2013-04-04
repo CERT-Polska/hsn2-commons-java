@@ -91,7 +91,8 @@ public class RbtRequestResponseEndPoint implements RequestResponseEndPoint {
 			} catch (IOException e) {
 				throw new BusException("Can't create channel.", e);
 			}
-			closed = false;
+			if (closed = !channel.isOpen())
+				throw new BusException("Cannot open channel.");
 		}
 	}
 	

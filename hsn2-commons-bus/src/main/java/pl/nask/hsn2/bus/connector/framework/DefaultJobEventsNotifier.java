@@ -83,4 +83,14 @@ public class DefaultJobEventsNotifier extends AbstractSerializableConnector impl
 		}
 		sendOut(reminder);
 	}
+
+	@Override
+	public void releaseResources() {
+		try {
+			notifyEndPoint.close();
+		} catch (BusException e) {
+			LOGGER.warn("Closing failed.",e);
+		}
+		
+	}
 }
