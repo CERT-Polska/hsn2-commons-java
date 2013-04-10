@@ -77,9 +77,10 @@ public abstract class AbstractPooledEndPoint {
 	 * @return <code>ExecutorService</code> instance
 	 *         or null id endpoint is not open.
 	 */
+	@Deprecated //TODO test performance
 	protected final ExecutorService getExecutor() {
 //		return executor;
-		return lp_executor;
+		return lp_executor; 
 	}
 
 	/**
