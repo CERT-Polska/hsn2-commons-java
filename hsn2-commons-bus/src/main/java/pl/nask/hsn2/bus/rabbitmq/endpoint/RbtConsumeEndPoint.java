@@ -104,7 +104,7 @@ public class RbtConsumeEndPoint implements ConsumeEndPoint {
 		Channel channel = null;
 		try {
 			channel = connection.createChannel();
-			LOGGER.info("Created channel:({})",channel.getChannelNumber());
+			LOGGER.info("Created consumer channel:({}) for queue ({})",channel.getChannelNumber(),consumerQueueName);
 		} catch (IOException e) {
 			LOGGER.error("Error creating channel.");
 			throw new BusException("Can't create channel.", e);

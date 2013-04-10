@@ -36,7 +36,9 @@ public abstract class AbstractPooledEndPoint {
 	private static final int DEFAULT_MAX_THREADS = 10;
 	private static final int DEFAULT_FINISH_WAIT = 30; // in seconds
 	
-	private ExecutorService executor = null;
+//	private ExecutorService executor = null;
+	private ExecutorService hp_executor = null;
+	private ExecutorService lp_executor = null;
 	private boolean closed = true;
 	private int maxThreads = DEFAULT_MAX_THREADS;
 	private int waitForFinishTime = DEFAULT_FINISH_WAIT;
@@ -76,7 +78,8 @@ public abstract class AbstractPooledEndPoint {
 	 *         or null id endpoint is not open.
 	 */
 	protected final ExecutorService getExecutor() {
-		return executor;
+//		return executor;
+		return lp_executor;
 	}
 
 	/**
@@ -96,7 +99,9 @@ public abstract class AbstractPooledEndPoint {
 	 */
 	public final void open() throws BusException {
 		if (closed) {
-			this.executor = Executors.newFixedThreadPool(maxThreads);
+//			this.executor = Executors.newFixedThreadPool(maxThreads);
+			this.hp_executor = Executors.newFixedThreadPool(maxThreads);
+			this.lp_executor = Executors.newFixedThreadPool(maxThreads);
 		}
 		closed = false;
 	}
@@ -109,14 +114,24 @@ public abstract class AbstractPooledEndPoint {
 	public final void close() throws BusException {
 		if (!closed) {
 			try {
-				executor.shutdown();
-				executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS);
+//				executor.shutdown();
+//				executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS);
+				this.hp_executor.shutdown();
+				this.lp_executor.shutdown();
+				if ( !this.hp_executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS)) {
+					this.hp_executor.shutdownNow();
+				}
+				if ( !this.lp_executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS) ) {
+					this.lp_executor.shutdownNow();
+				}
 				
 			} catch (InterruptedException e) {
 				// not important in this case
 			} finally {
 				closed = true;
-				executor = null;
+//				executor = null;
+				this.hp_executor = null;
+				this.lp_executor = null;
 			}
 		}
 		
