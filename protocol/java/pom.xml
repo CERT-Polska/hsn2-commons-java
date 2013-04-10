@@ -1,67 +1,71 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
- <modelVersion>4.0.0</modelVersion>
- <groupId>pl.nask.hsn2</groupId>
- <artifactId>hsn2-protobuff</artifactId>
- <version>2.0.26-SNAPSHOT</version>
- <name>HSN2 Commons :: Protocol Buffers Impl</name>
- <parent>
-	<artifactId>hsn2-commons</artifactId>
-	<groupId>pl.nask.hsn2</groupId>
-	<version>2.0.0-SNAPSHOT</version>
-	<relativePath>../..</relativePath>
-</parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>hsn2-protobuff</artifactId>
+	<name>HSN2 Commons :: Protocol Buffers Impl</name>
 
- <dependencies>
-  <dependency>
-   <groupId>com.google.protobuf</groupId>
-   <artifactId>protobuf-java</artifactId>
-   <version>2.4.1</version>
-  </dependency>
- </dependencies>
+	<parent>
+		<artifactId>hsn2-commons</artifactId>
+		<groupId>pl.nask.hsn2</groupId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../..</relativePath>
+	</parent>
 
-<build>
-  <plugins>
-    <plugin>
-      <artifactId>maven-antrun-plugin</artifactId>
-      <version>1.6</version>
-      <executions>
-        <execution>
-          <id>compile-protoc</id>
-          <phase>generate-sources</phase>
-          <configuration>
-            <tasks>
-              <!--<mkdir dir="${generated.sourceDirectory}" />-->
-              <path id="proto.path">
-                <fileset dir="${project.basedir}/../def">
-                  <include name="**/*.proto" />
-                </fileset>
-              </path>
-              <path id="proto.path.path">
-		<pathelement location="${project.basedir}/../def"/>
-	      </path>
-              <pathconvert pathsep=" " property="proto.files" refid="proto.path" />
-              <pathconvert pathsep=" " property="proto.path.proto.path" refid="proto.path.path" />
-              <exec executable="protoc" failonerror="true">
-                <arg value="--java_out=${project.basedir}/src/main/java" />
-                <arg value="--proto_path=${proto.path.proto.path}" />
-                <arg line="${proto.files}" />
-              </exec>
-            </tasks>
-          </configuration>
-          <goals>
-            <goal>run</goal>
-          </goals>
-        </execution>
-      </executions>
-    </plugin>
-    <plugin>
-      <artifactId>maven-compiler-plugin</artifactId>
-      <configuration>
-        <source>1.7</source>
-        <target>1.7</target>
-      </configuration>
-    </plugin>
-  </plugins>
-</build>
+	<dependencies>
+		<dependency>
+			<groupId>com.google.protobuf</groupId>
+			<artifactId>protobuf-java</artifactId>
+			<version>2.4.1</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>compile-protoc</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<!--<mkdir dir="${generated.sourceDirectory}" /> -->
+								<path id="proto.path">
+									<fileset dir="${project.basedir}/../def">
+										<include name="**/*.proto" />
+									</fileset>
+								</path>
+								<path id="proto.path.path">
+									<pathelement location="${project.basedir}/../def" />
+								</path>
+								<pathconvert pathsep=" " property="proto.files"
+									refid="proto.path" />
+								<pathconvert pathsep=" " property="proto.path.proto.path"
+									refid="proto.path.path" />
+								<exec executable="C:\Java\protobuf-2.4.1-win32\protoc" failonerror="true">
+									<!-- If you stuck with ant task unable to locate protoc put full 
+										path in executable argument above -->
+									<arg value="--java_out=${project.basedir}/src/main/java" />
+									<arg value="--proto_path=${proto.path.proto.path}" />
+									<arg line="${proto.files}" />
+								</exec>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>
