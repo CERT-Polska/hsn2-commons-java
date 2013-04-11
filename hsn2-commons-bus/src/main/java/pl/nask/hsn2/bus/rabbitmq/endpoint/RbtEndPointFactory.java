@@ -46,11 +46,10 @@ public class RbtEndPointFactory implements EndPointFactory {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RbtEndPointFactory.class);
 	
 	private ConnectionFactory factory;
-//	private Connection connection;
 	private Connection lp_connection;
 	private Connection hp_connection;
-	private int numberOfconsumerThreads = 10;
-	private final int numberOfPriorityThreads = 2;
+	private int numberOfConsumerThreads = 10;
+	private int numberOfPriorityThreads = 10;
 	
 	public final RbtEndPointFactory setServerAddress(String serverAddress) {
 		if (this.factory == null) {
@@ -71,7 +70,8 @@ public class RbtEndPointFactory implements EndPointFactory {
 	 * @return Instance this class.
 	 */
 	public final RbtEndPointFactory setNumberOfconsumerThreads(int numberOfconsumerThreads) {
-		this.numberOfconsumerThreads = numberOfconsumerThreads;
+		this.numberOfConsumerThreads = numberOfconsumerThreads;
+		this.numberOfPriorityThreads = numberOfconsumerThreads;
 		return this;
 	}
 	
@@ -100,7 +100,7 @@ public class RbtEndPointFactory implements EndPointFactory {
 		}
 		
 		return new RbtConsumeEndPoint(connection, messagesHandler,
-				routingKey, autoack, numberOfconsumerThreads);
+				routingKey, autoack, numberOfConsumerThreads);
 	}
 
 	@Override
@@ -139,7 +139,6 @@ public class RbtEndPointFactory implements EndPointFactory {
 						}
 			});
 		} else {
-//			return new RbtRequestResponseEndPoint(this.connection);
 			return new RbtRequestResponseEndPoint(this.lp_connection);
 		}
 	}		
@@ -171,7 +170,6 @@ public class RbtEndPointFactory implements EndPointFactory {
 						}
 			});
 		} else {
-//			return new RbtFireAndForgetEndPoint(this.connection);
 			return new RbtFireAndForgetEndPoint(this.hp_connection);
 		}
 	}
@@ -201,15 +199,11 @@ public class RbtEndPointFactory implements EndPointFactory {
 						}
 			});
 		} else {
-//			return new RbtMulticastEndPoint(this.connection);
 			return new RbtMulticastEndPoint(this.lp_connection);
 		}
 	}
 
-//	public final Connection getConnection() throws BusException {
-//		ensureIfConnectionOpen();
-//		return this.connection;
-//	}
+
 	public final Connection getHighPriorityConnection() throws BusException {
 		ensureIfConnectionOpen();
 		return this.hp_connection;
@@ -227,7 +221,6 @@ public class RbtEndPointFactory implements EndPointFactory {
 	}
 
 	public final boolean isConnectionValid() {
-//		return this.connection != null && this.connection.isOpen();
 		return this.lp_connection != null && this.hp_connection != null  &&
 				this.lp_connection.isOpen() && this.hp_connection.isOpen();
 	}
@@ -239,12 +232,10 @@ public class RbtEndPointFactory implements EndPointFactory {
 	 */
 	public void reconnect() throws BusException {
 		try {
-			LOGGER.info("(Re)connecting to Rabbit MQ server.");
-//			RbtUtils.closeConnection(this.connection);
-//			this.connection = factory.newConnection(new ConfigurableExecutorService("rbt-consumer-", numberOfconsumerThreads));		
+			LOGGER.info("(Re)connecting to Rabbit MQ server.");	
 			RbtUtils.closeConnection(this.lp_connection);
 			RbtUtils.closeConnection(this.hp_connection);
-			this.lp_connection = factory.newConnection(  new ConfigurableExecutorService("rbt-consumer-", numberOfconsumerThreads) );
+			this.lp_connection = factory.newConnection(  new ConfigurableExecutorService("rbt-consumer-", numberOfConsumerThreads) );
 			this.hp_connection = factory.newConnection(  new ConfigurableExecutorService("rbt-consumer-privileged-", numberOfPriorityThreads)  );
 			LOGGER.info("Connected to Rabbit MQ server.");
 		} catch (IOException e) {
@@ -255,7 +246,6 @@ public class RbtEndPointFactory implements EndPointFactory {
 	public void disconnect() throws BusException {
 		if (isConnectionValid()) {
 			try {
-//				this.connection.close();
 				this.lp_connection.close();
 				this.hp_connection.close();
 			} catch (IOException e) {

@@ -36,9 +36,8 @@ public abstract class AbstractPooledEndPoint {
 	private static final int DEFAULT_MAX_THREADS = 10;
 	private static final int DEFAULT_FINISH_WAIT = 30; // in seconds
 	
-//	private ExecutorService executor = null;
+	private ExecutorService executor = null;
 	private ExecutorService highPriorityExecutor = null;
-	private ExecutorService lowPriorityExecutor = null;
 	private boolean closed = true;
 	private int maxThreads = DEFAULT_MAX_THREADS;
 	private int waitForFinishTime = DEFAULT_FINISH_WAIT;
@@ -78,7 +77,7 @@ public abstract class AbstractPooledEndPoint {
 	 *         or null id endpoint is not open.
 	 */
 	protected final ExecutorService getExecutor() {
-		return lowPriorityExecutor; 
+		return executor; 
 	}
 	protected final ExecutorService getHighExecutor() {
 		return highPriorityExecutor;
@@ -102,9 +101,8 @@ public abstract class AbstractPooledEndPoint {
 	 */
 	public final void open() throws BusException {
 		if (closed) {
-//			this.executor = Executors.newFixedThreadPool(maxThreads);
 			this.highPriorityExecutor = Executors.newFixedThreadPool(maxThreads);
-			this.lowPriorityExecutor = Executors.newFixedThreadPool(maxThreads);
+			this.executor = Executors.newFixedThreadPool(maxThreads);
 		}
 		closed = false;
 	}
@@ -117,24 +115,21 @@ public abstract class AbstractPooledEndPoint {
 	public final void close() throws BusException {
 		if (!closed) {
 			try {
-//				executor.shutdown();
-//				executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS);
 				this.highPriorityExecutor.shutdown();
-				this.lowPriorityExecutor.shutdown();
+				this.executor.shutdown();
 				if ( !this.highPriorityExecutor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS)) {
 					this.highPriorityExecutor.shutdownNow();
 				}
-				if ( !this.lowPriorityExecutor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS) ) {
-					this.lowPriorityExecutor.shutdownNow();
+				if ( !this.executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS) ) {
+					this.executor.shutdownNow();
 				}
 				
 			} catch (InterruptedException e) {
 				// not important in this case
 			} finally {
 				closed = true;
-//				executor = null;
 				this.highPriorityExecutor = null;
-				this.lowPriorityExecutor = null;
+				this.executor = null;
 			}
 		}
 		
