@@ -80,7 +80,8 @@ public class PooledFireAndForgetEndPoint extends AbstractPooledEndPoint implemen
 	@Override
 	public final void sendNotify(final Message message) throws BusException {
 		
-		getExecutor().execute(new Runnable(){
+		//		getExecutor().execute(new Runnable(){
+		getHighExecutor().execute(new Runnable(){
 			@Override
 			public void run() {
 				try {
@@ -96,7 +97,7 @@ public class PooledFireAndForgetEndPoint extends AbstractPooledEndPoint implemen
 	public final void spread(final Message message, final String[] servicesNames)
 			throws BusException {
 		
-		getExecutor().execute(new Runnable(){
+		getHighExecutor().execute(new Runnable(){
 			@Override
 			public void run() {
 				try {

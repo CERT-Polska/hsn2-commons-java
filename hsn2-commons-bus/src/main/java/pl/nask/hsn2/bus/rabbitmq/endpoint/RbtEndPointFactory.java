@@ -215,7 +215,7 @@ public class RbtEndPointFactory implements EndPointFactory {
 		return this.hp_connection;
 		
 	}
-	public final Connection getLowPrirityConnection() throws BusException {
+	public final Connection getConnection() throws BusException {
 		ensureIfConnectionOpen();
 		return this.lp_connection;
 	}
@@ -244,8 +244,8 @@ public class RbtEndPointFactory implements EndPointFactory {
 //			this.connection = factory.newConnection(new ConfigurableExecutorService("rbt-consumer-", numberOfconsumerThreads));		
 			RbtUtils.closeConnection(this.lp_connection);
 			RbtUtils.closeConnection(this.hp_connection);
-			this.lp_connection = factory.newConnection(  new ConfigurableExecutorService("rbt-consumer-low-priority-", numberOfconsumerThreads) );
-			this.hp_connection = factory.newConnection(  new ConfigurableExecutorService("rbt-consumer-high-priority-", numberOfPriorityThreads)  );
+			this.lp_connection = factory.newConnection(  new ConfigurableExecutorService("rbt-consumer-", numberOfconsumerThreads) );
+			this.hp_connection = factory.newConnection(  new ConfigurableExecutorService("rbt-consumer-privileged-", numberOfPriorityThreads)  );
 			LOGGER.info("Connected to Rabbit MQ server.");
 		} catch (IOException e) {
 			throw new BusException("Cannot connect to Rabbit MQ server.", e);

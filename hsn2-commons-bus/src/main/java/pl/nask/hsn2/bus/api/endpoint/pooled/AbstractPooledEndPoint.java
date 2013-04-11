@@ -37,8 +37,8 @@ public abstract class AbstractPooledEndPoint {
 	private static final int DEFAULT_FINISH_WAIT = 30; // in seconds
 	
 //	private ExecutorService executor = null;
-	private ExecutorService hp_executor = null;
-	private ExecutorService lp_executor = null;
+	private ExecutorService highPriorityExecutor = null;
+	private ExecutorService lowPriorityExecutor = null;
 	private boolean closed = true;
 	private int maxThreads = DEFAULT_MAX_THREADS;
 	private int waitForFinishTime = DEFAULT_FINISH_WAIT;
@@ -77,11 +77,13 @@ public abstract class AbstractPooledEndPoint {
 	 * @return <code>ExecutorService</code> instance
 	 *         or null id endpoint is not open.
 	 */
-	@Deprecated //TODO test performance
 	protected final ExecutorService getExecutor() {
-//		return executor;
-		return lp_executor; 
+		return lowPriorityExecutor; 
 	}
+	protected final ExecutorService getHighExecutor() {
+		return highPriorityExecutor;
+	}
+
 
 	/**
 	 * Internal check if endpoint is closed.
@@ -101,8 +103,8 @@ public abstract class AbstractPooledEndPoint {
 	public final void open() throws BusException {
 		if (closed) {
 //			this.executor = Executors.newFixedThreadPool(maxThreads);
-			this.hp_executor = Executors.newFixedThreadPool(maxThreads);
-			this.lp_executor = Executors.newFixedThreadPool(maxThreads);
+			this.highPriorityExecutor = Executors.newFixedThreadPool(maxThreads);
+			this.lowPriorityExecutor = Executors.newFixedThreadPool(maxThreads);
 		}
 		closed = false;
 	}
@@ -117,13 +119,13 @@ public abstract class AbstractPooledEndPoint {
 			try {
 //				executor.shutdown();
 //				executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS);
-				this.hp_executor.shutdown();
-				this.lp_executor.shutdown();
-				if ( !this.hp_executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS)) {
-					this.hp_executor.shutdownNow();
+				this.highPriorityExecutor.shutdown();
+				this.lowPriorityExecutor.shutdown();
+				if ( !this.highPriorityExecutor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS)) {
+					this.highPriorityExecutor.shutdownNow();
 				}
-				if ( !this.lp_executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS) ) {
-					this.lp_executor.shutdownNow();
+				if ( !this.lowPriorityExecutor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS) ) {
+					this.lowPriorityExecutor.shutdownNow();
 				}
 				
 			} catch (InterruptedException e) {
@@ -131,8 +133,8 @@ public abstract class AbstractPooledEndPoint {
 			} finally {
 				closed = true;
 //				executor = null;
-				this.hp_executor = null;
-				this.lp_executor = null;
+				this.highPriorityExecutor = null;
+				this.lowPriorityExecutor = null;
 			}
 		}
 		
