@@ -25,6 +25,7 @@ public class FinishedJobsListener implements Runnable {
 	private String rabbitMqHost;
 	private String rabbitMqExchange;
 	private AtomicBoolean isInitialized = new AtomicBoolean(false);
+	private AtomicBoolean isMainLoopEnabled = new AtomicBoolean(false);
 
 	public void initialize(String rbtHost, String rbtExchange) {
 		if (!isInitialized.get()) {
@@ -35,6 +36,7 @@ public class FinishedJobsListener implements Runnable {
 					rabbitMqHost = rbtHost;
 					rabbitMqExchange = rbtExchange;
 					isInitialized.set(true);
+					isMainLoopEnabled.set(true);
 				}
 				LOG.debug("Finished jobs listener initialized.");
 			}
@@ -52,8 +54,7 @@ public class FinishedJobsListener implements Runnable {
 				QueueingConsumer rabbitMqConsumer = prepareRabbitMqConsumer();
 
 				// Main loop.
-				boolean isMainLoopEnabled = true;
-				while (isMainLoopEnabled) {
+				while (isMainLoopEnabled.get()) {
 					try {
 						QueueingConsumer.Delivery delivery = rabbitMqConsumer.nextDelivery();
 
@@ -72,7 +73,7 @@ public class FinishedJobsListener implements Runnable {
 
 					} catch (ShutdownSignalException e) {
 						LOG.debug("Shutdown signal received.", e);
-						isMainLoopEnabled = false;
+						isMainLoopEnabled.set(false);
 					} catch (ConsumerCancelledException e) {
 						LOG.debug("Consumer cancelled operation.", e);
 					} catch (InterruptedException e) {
@@ -89,10 +90,10 @@ public class FinishedJobsListener implements Runnable {
 		}
 	}
 
-	private synchronized QueueingConsumer prepareRabbitMqConsumer() throws IOException {
+	private QueueingConsumer prepareRabbitMqConsumer() throws IOException {
 		ConnectionFactory rabbitMqConnectionFactory = new ConnectionFactory();
 		rabbitMqConnectionFactory.setHost(rabbitMqHost);
-		QueueingConsumer rabbitMqConsumer = null;
+		
 		Connection rabbitMqConnection = rabbitMqConnectionFactory.newConnection();
 		Channel rabbitMqChannel = rabbitMqConnection.createChannel();
 		rabbitMqChannel.exchangeDeclare(rabbitMqExchange, "fanout");
@@ -100,12 +101,20 @@ public class FinishedJobsListener implements Runnable {
 		String rabbitMqQueueName = rabbitMqChannel.queueDeclare().getQueue();
 		rabbitMqChannel.queueBind(rabbitMqQueueName, rabbitMqExchange, "");
 
-		rabbitMqConsumer = new QueueingConsumer(rabbitMqChannel);
+		QueueingConsumer rabbitMqConsumer = new QueueingConsumer(rabbitMqChannel);
 		rabbitMqChannel.basicConsume(rabbitMqQueueName, AUTO_ACK, rabbitMqConsumer);
 		return rabbitMqConsumer;
 	}
 
 	public boolean isJobFinished(long jobId) {
 		return knownFinishedJobs.contains(jobId);
+	}
+	
+	public boolean isMainLoopEnabled() {
+		return isMainLoopEnabled.get();
+	}
+
+	public void setMainLoopEnabled(boolean flag) {
+		isMainLoopEnabled.set(flag);
 	}
 }
