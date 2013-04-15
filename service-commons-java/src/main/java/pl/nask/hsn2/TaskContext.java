@@ -71,11 +71,11 @@ public class TaskContext {
      * 
      * Until closeSubContext() is called, all attributes and new objects will be created in the scope of the newly created context   
      */
-    public void openSubContext() throws ContextSizeLimitExceeded {
+    public void openSubContext() throws ContextSizeLimitExceededException {
     	if (currentObject.contextHeight() >= treeHeightLimit)
-    		throw new ContextSizeLimitExceeded("Tree height limit (" + treeHeightLimit +") exceeded");
+    		throw new ContextSizeLimitExceededException("Tree height limit (" + treeHeightLimit +") exceeded");
     	if (objectTreeRoot.treeSize() >= treeSizeLimit)
-    		throw new ContextSizeLimitExceeded("Tree size limit (" + treeSizeLimit +") exceeded");
+    		throw new ContextSizeLimitExceededException("Tree size limit (" + treeSizeLimit +") exceeded");
     	
     	currentObject = currentObject.newObject();
     }
