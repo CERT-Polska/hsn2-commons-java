@@ -67,14 +67,14 @@ public class FileIdGenerator implements IdGenerator {
             bufferedReader = new BufferedReader(new FileReader(this.seqPath));
             return Long.parseLong(bufferedReader.readLine());
 
-        } catch (IOException e) {
+        } catch (IOException | NumberFormatException e) {
 
             if (!create) {
                 LOGGER.info("Sequence file {} does not exist or is corrupted. Force creation is not set.", this.seqPath);
                 throw new IdGeneratorException("Sequence file doesn't exist: " + this.seqPath, e);
             }
 
-            LOGGER.info("Sequence file {} does not exist or is corrupted. Will create newone.", this.seqPath);
+            LOGGER.warn("Sequence file {} does not exist or is corrupted. Will create newone.", this.seqPath);
 
             try {
                 save(0L);
