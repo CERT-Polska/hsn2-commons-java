@@ -146,9 +146,13 @@ public class GenericService {
 		this.serviceQueueName = serviceQueueName;
 	}
 	
-	public boolean waitForStartUp(Long waitTime) {
+	public boolean waitForStartUp() {
+		return waitForStartUp(0l);
+	}
+	
+	public boolean waitForStartUp(long  waitTime) {
 		try {
-			if ( waitTime == null || waitTime < 1l) {
+			if (waitTime < 1l) {
 				startUpLatch.await();
 				return true;
 			} else {

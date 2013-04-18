@@ -101,4 +101,14 @@ public class ObjectStoreConnectorImpl implements ObjectStoreConnector {
             throw new StorageException(e.getMessage(), e);
         }
     }
+
+	@Override
+	public void close() {
+		try {
+			connector.close();
+		} catch (BusException e) {
+			e.printStackTrace();
+		}
+		
+	}
 }
