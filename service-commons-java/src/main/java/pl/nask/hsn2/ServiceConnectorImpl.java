@@ -227,4 +227,16 @@ public class ServiceConnectorImpl implements ServiceConnector {
 	public void ignoreLastTaskRequest() {
 		frameworkConnector.ackLastMessage();
 	}
+
+	@Override
+	public void close() {
+		try {
+			frameworkConnector.close();
+			objectStoreConnector.close();
+		} catch (BusException e) {
+			LOGGER.warn("Exception when closing",e);
+		}
+		
+	}
+
 }

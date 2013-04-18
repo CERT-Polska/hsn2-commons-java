@@ -41,5 +41,6 @@ public interface ObjectStoreConnector {
 
 	ObjectResponse query(long jobId, List<QueryStructure> queryStructures)
 			throws StorageException;
+	void close();
 
 }

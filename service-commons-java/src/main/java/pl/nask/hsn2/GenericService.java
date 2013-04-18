@@ -21,9 +21,11 @@ package pl.nask.hsn2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +47,7 @@ public class GenericService {
 
     private ExecutorService executor;
     private int maxThreads;
+    private final CountDownLatch startUpLatch = new CountDownLatch(1);
     
     private FinishedJobsListener finishedJobsListener;
 
@@ -81,6 +84,7 @@ public class GenericService {
 
 		finishedJobsListener.initialize(connectorAddress, notifyExchangeName);
 		new Thread(finishedJobsListener).start();
+		startUpLatch.countDown();
     }
 
 	List<Future<Void>> start() throws InterruptedException {
@@ -140,6 +144,25 @@ public class GenericService {
 
 	public void setServiceQueueName(String serviceQueueName) {
 		this.serviceQueueName = serviceQueueName;
+	}
+	
+	public boolean waitForStartUp() {
+		return waitForStartUp(0l);
+	}
+	
+	public boolean waitForStartUp(long  waitTime) {
+		try {
+			if (waitTime < 1l) {
+				startUpLatch.await();
+				return true;
+			} else {
+				return startUpLatch.await(waitTime, TimeUnit.MILLISECONDS);
+			}
+
+		} catch (InterruptedException e) {
+			LOG.warn("Interrupted while waiting for startup");
+		}
+		return false;
 	}
 
 	public String getServiceName(){
