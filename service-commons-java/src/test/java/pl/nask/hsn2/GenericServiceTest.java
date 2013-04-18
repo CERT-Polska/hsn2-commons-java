@@ -78,7 +78,7 @@ public class GenericServiceTest {
 		
 		Assert.assertEquals(counter.get(), 0);
 		
-		gs.start();
+		gs.startTaskProcessors();
 		
 		Thread.sleep(1000);
 		

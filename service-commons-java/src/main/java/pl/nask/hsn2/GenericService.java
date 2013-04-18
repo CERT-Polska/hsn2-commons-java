@@ -72,14 +72,11 @@ public class GenericService implements Runnable{
     }
 
 	public void run() {
-	    start();
-        
-
-		finishedJobsListener.initialize(connectorAddress, notifyExchangeName);
-		new Thread(finishedJobsListener).start();
+	    startTaskProcessors();
+        startFinishedJobsListener();
     }
 
-	List<Future<Void>> start() {
+	List<Future<Void>> startTaskProcessors() {
 		List<Future<Void>> results = new ArrayList<>(maxThreads);
 		for (int i = 0; i < maxThreads; i++) {
 	        TaskProcessor processor = prepareTaskProcessor();
@@ -91,13 +88,18 @@ public class GenericService implements Runnable{
 	    return results;
 	}
 	
+	private void startFinishedJobsListener(){
+		finishedJobsListener.initialize(connectorAddress, notifyExchangeName);
+		new Thread(finishedJobsListener).start();
+	}
+	
 	public void stop() {
 		LOG.info("Shutting down");
 		for (TaskProcessor p: taskProcessors) {
 			p.setCanceled();
 		}
 		executor.shutdownNow();
-		finishedJobsListener.setMainLoopEnabled(false);
+		finishedJobsListener.shutdown();
 	}
 
     private TaskProcessor prepareTaskProcessor() {

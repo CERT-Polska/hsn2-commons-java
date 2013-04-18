@@ -114,7 +114,8 @@ public class FinishedJobsListener implements Runnable {
 		return isMainLoopEnabled.get();
 	}
 
-	public void setMainLoopEnabled(boolean flag) {
-		isMainLoopEnabled.set(flag);
+	public void shutdown() {
+		isMainLoopEnabled.set(false);
+		Thread.currentThread().interrupt();
 	}
 }
