@@ -67,6 +67,7 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
     
     public void setCanceled() {
     	interrupted.set(true);
+    	connector.close();
     }
 
     @Override
@@ -150,6 +151,10 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
 			System.exit(5);
 		} catch (BusException e) {
 			logError("Communication error!", jobId, reqId, e);
+			if ( interrupted.get()) {
+				throw new InterruptedException("task interrupted:"+reqId);
+			}
+			
 		} catch (InterruptedException e) {
 			logError("Interrupted while processing job", jobId, reqId, e);
 			throw e;
