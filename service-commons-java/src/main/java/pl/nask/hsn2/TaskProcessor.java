@@ -68,6 +68,7 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
     public void setCanceled() {
     	interrupted.set(true);
     	connector.close();
+    	Thread.currentThread().interrupt();
     }
 
     @Override

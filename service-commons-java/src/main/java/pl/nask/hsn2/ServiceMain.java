@@ -19,19 +19,26 @@
 
 package pl.nask.hsn2;
 
+import java.lang.Thread.UncaughtExceptionHandler;
+
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
-import org.apache.commons.daemon.DaemonInitException;
+import org.apache.commons.daemon.DaemonController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import pl.nask.hsn2.service.JsAnalyzerTaskFactory;
+import pl.nask.hsn2.task.TaskFactory;
 
 public abstract class ServiceMain implements Daemon {
-	private CommandLineParams cmd;
-	GenericService service;
+	private static final Logger LOGGER = LoggerFactory.getLogger(ServiceMain.class);
+	private volatile DaemonController daemonCtrl = null;
+	protected CommandLineParams cmd;
+	private GenericService service;
 	private Thread serviceRunner;
 	
 	protected abstract CommandLineParams parseArguments(String[] args);
-	protected abstract void initializeService();
+	protected abstract void prepareService();
+	protected abstract TaskFactory createTaskFactory();
 	
 	@Override
 	public void destroy() {
@@ -40,26 +47,50 @@ public abstract class ServiceMain implements Daemon {
 	}
 
 	@Override
-	public void init(DaemonContext context) throws DaemonInitException {
+	public void init(DaemonContext context) {
+		daemonCtrl = context.getController();
 		cmd = parseArguments(context.getArguments());
-		initializeService();
-		service = createService();
+		prepareService();
+		createService();
 	}
 
-	private GenericService createService() {
-		new GenericService(createTaskFactory(cmd), cmd.getMaxThreads(),	cmd.getRbtCommonExchangeName(), cmd.getRbtNotifyExchangeName());
-		return null;
+	private void createService() {
+		service = new GenericService(createTaskFactory(), cmd.getMaxThreads(),	cmd.getRbtCommonExchangeName(), cmd.getRbtNotifyExchangeName());
+		service.setDefaultUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler());
 	}
+	
 	@Override
-	public void start() throws Exception {
+	public void start() {
 		cmd.applyArguments(service);
+		
 		serviceRunner = new Thread(service, cmd.getServiceName());
+		serviceRunner.start();
+		try {
+			service.waitForStartUp();
+			LOGGER.info("Service started.");
+		} catch (InterruptedException e) {
+			LOGGER.warn("Interrupted while waiting for startup");
+		}
 	}
 
 	@Override
-	public void stop() throws Exception {
-		// TODO Auto-generated method stub
-
+	public void stop() {
+		service.stop();
+		serviceRunner.interrupt();
 	}
+	
+	public class DefaultUncaughtExceptionHandler implements UncaughtExceptionHandler{
 
+		@Override
+		public void uncaughtException(Thread t, Throwable e) {
+			LOGGER.warn("Service exit.", e);
+			if (daemonCtrl != null) {
+				daemonCtrl.fail(e.getMessage());
+			}
+			else {
+				System.exit(1);
+			}
+		}
+	}
+	
 }

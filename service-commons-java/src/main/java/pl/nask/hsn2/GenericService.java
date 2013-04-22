@@ -19,8 +19,10 @@
 
 package pl.nask.hsn2;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -33,7 +35,7 @@ import pl.nask.hsn2.task.TaskFactory;
 
 
 public class GenericService implements Runnable{
-    private static final Logger LOG = LoggerFactory.getLogger(GenericService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GenericService.class);
 
     private String connectorAddress = null;
 	private String objectStoreQueueName = null;
@@ -45,6 +47,7 @@ public class GenericService implements Runnable{
 
     private ExecutorService executor;
     private int maxThreads = 1;
+    private final CountDownLatch startUpLatch = new CountDownLatch(1);
     
     private FinishedJobsListener finishedJobsListener;
 
@@ -53,6 +56,8 @@ public class GenericService implements Runnable{
     private final TaskFactory jobFactory;
 
     private TaskContextFactory contextFactory;
+
+	private UncaughtExceptionHandler defaultUncaughtExceptionHandler;
 
     public GenericService(TaskFactory jobFactory, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
         this(jobFactory, null, maxThreads, rbtCommonExchangeName, rbtNotifyExchangeName);
@@ -72,8 +77,10 @@ public class GenericService implements Runnable{
     }
 
 	public void run() {
+		Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler);
 	    startTaskProcessors();
         startFinishedJobsListener();
+        startUpLatch.countDown();
     }
 
 	List<Future<Void>> startTaskProcessors() {
@@ -83,7 +90,7 @@ public class GenericService implements Runnable{
             taskProcessors.add(processor);
             Future<Void> result = executor.submit(processor);
             results.add(result);
-            LOG.info("TaskProcessor {} started.", result);
+            LOGGER.info("TaskProcessor {} started.", result);
         }
 	    return results;
 	}
@@ -94,7 +101,7 @@ public class GenericService implements Runnable{
 	}
 	
 	public void stop() {
-		LOG.info("Shutting down");
+		LOGGER.info("Shutting down");
 		for (TaskProcessor p: taskProcessors) {
 			p.setCanceled();
 		}
@@ -142,6 +149,10 @@ public class GenericService implements Runnable{
 	public void setServiceQueueName(String serviceQueueName) {
 		this.serviceQueueName = serviceQueueName;
 	}
+	
+	public void waitForStartUp() throws InterruptedException {
+			startUpLatch.await();
+	}
 
 	public String getServiceName(){
 		return serviceName;
@@ -150,5 +161,11 @@ public class GenericService implements Runnable{
 	public void setServiceName(String serviceName) {
 		this.serviceName = serviceName;
 		GenericServiceInfo.setServiceName(serviceName);
+	}
+
+	public void setDefaultUncaughtExceptionHandler(
+			UncaughtExceptionHandler defaultUncaughtExceptionHandler) {
+		this.defaultUncaughtExceptionHandler = defaultUncaughtExceptionHandler;
+		
 	}
 }
