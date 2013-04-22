@@ -20,6 +20,10 @@
 package pl.nask.hsn2;
 
 public class ContextSizeLimitExceeded extends Exception {
+	/**
+	 * Serial id.
+	 */
+	private static final long serialVersionUID = 7517568809314037453L;
 
 	public ContextSizeLimitExceeded(String message, Throwable cause) {
 		super(message, cause);

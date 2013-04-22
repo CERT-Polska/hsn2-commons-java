@@ -19,16 +19,17 @@
 
 package pl.nask.hsn2;
 
-
 public class StorageException extends Exception {
-
+	/**
+	 * Serial id.
+	 */
 	private static final long serialVersionUID = 5513036533474530664L;
 
 	public StorageException(String msg, Throwable e) {
-        super(msg, e);
-    }
+		super(msg, e);
+	}
 
-    public StorageException(String msg) {
-        super(msg);
-    }
+	public StorageException(String msg) {
+		super(msg);
+	}
 }

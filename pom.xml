@@ -10,17 +10,13 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<version.jmockit>0.999.15</version.jmockit>
-		<version.testing>6.7</version.testing>
+		<version.jmockit>1.1</version.jmockit>
+		<version.testing>6.8</version.testing>
 		<version.slf4j>1.6.1</version.slf4j>
 		<version.commons.cli>1.2</version.commons.cli>
 	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.testng</groupId>
-			<artifactId>testng</artifactId>
-		</dependency>
 		<dependency>
 			<groupId>com.googlecode.jmockit</groupId>
 			<artifactId>jmockit</artifactId>
@@ -29,16 +25,14 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
-			<dependency>
-				<groupId>org.testng</groupId>
-				<artifactId>testng</artifactId>
-				<version>${version.testing}</version>
-				<scope>test</scope>
-			</dependency>
 			<dependency>
 				<groupId>com.googlecode.jmockit</groupId>
 				<artifactId>jmockit</artifactId>
@@ -54,6 +48,12 @@
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-log4j12</artifactId>
 				<version>${version.slf4j}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.testng</groupId>
+				<artifactId>testng</artifactId>
+				<version>${version.testing}</version>
+				<scope>test</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -72,7 +72,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.14</version>
+					<version>2.14.1</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-source-plugin</artifactId>
@@ -87,22 +87,6 @@
 
 		<plugins>
 			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<argLine>-javaagent:"${settings.localRepository}"/com/googlecode/jmockit/jmockit/${version.jmockit}/jmockit-${version.jmockit}.jar
-					</argLine>
-					<properties>
-						<property>
-							<name>listener</name>
-							<value>
-								mockit.integration.testng.Initializer
-							</value>
-						</property>
-					</properties>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
 				<executions>
 					<execution>
@@ -115,16 +99,6 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<repositories>
-		<repository>
-			<id>jmockit-svn</id>
-			<url>http://jmockit.googlecode.com/svn/maven-repo</url>
-			<releases>
-				<checksumPolicy>ignore</checksumPolicy>
-			</releases>
-		</repository>
-	</repositories>
 
 	<modules>
 		<module>protocol/java</module>
