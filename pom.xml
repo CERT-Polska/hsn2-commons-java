@@ -12,7 +12,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<version.jmockit>1.1</version.jmockit>
 		<version.testing>6.8</version.testing>
-		<version.slf4j>1.6.1</version.slf4j>
+		<version.slf4j>1.7.5</version.slf4j>
 		<version.commons.cli>1.2</version.commons.cli>
 	</properties>
 
