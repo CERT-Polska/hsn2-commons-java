@@ -29,6 +29,15 @@
 			<groupId>org.testng</groupId>
 			<artifactId>testng</artifactId>
 		</dependency>
+
+		<!-- Dependency below (jmockit-coverage) is for coverage report only -->
+		<dependency>
+			<groupId>com.googlecode.jmockit</groupId>
+			<artifactId>jmockit-coverage</artifactId>
+			<version>0.999.20</version>
+			<scope>runtime</scope>
+		</dependency>
+
 	</dependencies>
 
 	<dependencyManagement>
@@ -73,6 +82,15 @@
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>2.14.1</version>
+
+					<!-- Configuration below (coverage-outputDir) is for coverage report 
+						only -->
+					<configuration>
+						<argLine>
+							-Djmockit-coverage-outputDir=target/my-coverage-report
+						</argLine>
+					</configuration>
+
 				</plugin>
 				<plugin>
 					<artifactId>maven-source-plugin</artifactId>
