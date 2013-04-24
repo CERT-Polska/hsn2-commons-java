@@ -77,12 +77,12 @@ public class Attribute implements Operation {
 	 */
 	public final void setValue(AttributeType type, Object value) {
 		if (type == null) {
-			throw new IllegalArgumentException("Attribute type cannot be null.");
+			throw new IllegalArgumentException("Attribute (" + name + ") type cannot be null.");
 		}
 
 		if (value == null
 				&& type != AttributeType.EMPTY) {
-			throw new IllegalStateException("Null value allowed for EMPTY type only.");
+			throw new IllegalStateException("Null value allowed for EMPTY type only. name: " + name +", type: " + type.name());
 		}
 		
 		type.assertFits(value);
@@ -111,7 +111,7 @@ public class Attribute implements Operation {
 		} else if (value instanceof Float) {
 			this.type = AttributeType.FLOAT;
 		} else {
-			throw new IllegalArgumentException("Cannot map value to Attribute : " + value + ", " + value.getClass());
+			throw new IllegalArgumentException("Cannot map value to Attribute (" + name + "): " + value + ", " + value.getClass());
 		}
 
 		this.value = value;
@@ -171,7 +171,7 @@ public class Attribute implements Operation {
 	 */
 	public final boolean getBool() {
 		if (type != AttributeType.BOOL) {
-			throw new IllegalStateException("Can't get bool value for attribute type " + type);
+			throw new IllegalStateException("Can't get bool value for attribute (" + name + ") type " + type);
 		}
 		return (Boolean) value;
 	}
@@ -183,7 +183,7 @@ public class Attribute implements Operation {
 	 */
 	public final int getInteger() {
 		if (type != AttributeType.INT) {
-			throw new IllegalStateException("Can't get int value for attribute type " + type);
+			throw new IllegalStateException("Can't get int value for attribute (" + name + ") type " + type);
 		}
 		return (Integer) value;
 	}
@@ -195,7 +195,7 @@ public class Attribute implements Operation {
 	 */
 	public final long getTime() {
 		if (type != AttributeType.TIME) {
-			throw new IllegalStateException("Can't get time value for attribute type " + type);
+			throw new IllegalStateException("Can't get time value for attribute (" + name + ") type " + type);
 		}
 		return (Long) value;
 	}
@@ -207,7 +207,7 @@ public class Attribute implements Operation {
 	 */
 	public final float getFloat() {
 		if (type != AttributeType.FLOAT) {
-			throw new IllegalStateException("Can't get float value for attribute type " + type);
+			throw new IllegalStateException("Can't get float value for attribute (" + name + ") type " + type);
 		}
 		return (Float) value;
 	}
@@ -219,7 +219,7 @@ public class Attribute implements Operation {
 	 */
 	public final String getString() {
 		if (type != AttributeType.STRING) {
-			throw new IllegalStateException("Can't get string value for attribute type " + type);
+			throw new IllegalStateException("Can't get string value for attribute (" + name + ") type " + type);
 		}
 		return (String) value;
 	}
@@ -231,7 +231,7 @@ public class Attribute implements Operation {
 	 */
 	public final long getObejectRef() {
 		if (type != AttributeType.OBJECT) {
-			throw new IllegalStateException("Can't get object ref value for attribute type " + type);
+			throw new IllegalStateException("Can't get object ref value for attribute (" + name + ") type " + type);
 		}
 		return (Long) value;
 	}
@@ -243,7 +243,7 @@ public class Attribute implements Operation {
 	 */
 	public final Reference getBytes() {
 		if (type != AttributeType.BYTES) {
-			throw new IllegalStateException("Can't get bytes value for attribute type " + type);
+			throw new IllegalStateException("Can't get bytes value for attribute type (" + name + ") " + type);
 		}
 		return (Reference) value;
 	}
