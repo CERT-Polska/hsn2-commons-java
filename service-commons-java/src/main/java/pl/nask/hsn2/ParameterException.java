@@ -20,6 +20,9 @@
 package pl.nask.hsn2;
 
 public class ParameterException extends Exception {
+	/**
+	 * Serial id.
+	 */
 	private static final long serialVersionUID = -5328278733233073118L;
 
 	public ParameterException(String msg) {

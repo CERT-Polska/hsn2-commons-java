@@ -42,7 +42,7 @@ import static org.apache.commons.httpclient.HttpStatus.*;
 
 public class DataStoreConnectorImpl implements DataStoreConnector {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataStoreConnectorImpl.class);
-	private String address;
+	private final String address;
 
 	public DataStoreConnectorImpl(String dataStoreAddress) {
 		address = dataStoreAddress;

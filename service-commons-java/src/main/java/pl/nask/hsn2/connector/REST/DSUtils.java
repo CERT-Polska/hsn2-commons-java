@@ -19,14 +19,16 @@
 
 package pl.nask.hsn2.connector.REST;
 
-public class DSUtils {
+public final class DSUtils {
+	private DSUtils() {
+		// Utility class.
+	}
 
-    public static String dsAddress(String address, long jobId) {
-        return String.format("%sdata/%s", address, jobId);
-    }
+	public static String dsAddress(String address, long jobId) {
+		return String.format("%sdata/%s", address, jobId);
+	}
 
-
-    public static String dsAddress(String address, long jobId, long dataId) {
-        return String.format("%sdata/%s/%s", address, jobId, dataId);
-    }
+	public static String dsAddress(String address, long jobId, long dataId) {
+		return String.format("%sdata/%s/%s", address, jobId, dataId);
+	}
 }
