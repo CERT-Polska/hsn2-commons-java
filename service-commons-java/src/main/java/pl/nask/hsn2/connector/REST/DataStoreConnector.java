@@ -24,21 +24,19 @@ import java.io.InputStream;
 
 import pl.nask.hsn2.ResourceException;
 import pl.nask.hsn2.StorageException;
-import pl.nask.hsn2.protobuff.DataStore.DataResponse;
 
 import com.google.protobuf.GeneratedMessage;
 
 public interface DataStoreConnector {
+	InputStream sendGet(long jobId, long dataId) throws IOException;
 
-    public DataResponse sendGet(long jobId, long dataId) throws IOException;
+	DataResponse sendPost(byte[] data, long jobId) throws IOException;
 
-    public DataResponse sendPost(byte[] data, long jobId) throws IOException;
+	DataResponse sendPost(InputStream dataInputStream, long jobId) throws IOException;
 
-    public DataResponse sendPost(InputStream dataInputStream, long jobId) throws IOException;
+	InputStream getResourceAsStream(long jobId, long referenceId) throws ResourceException, StorageException;
 
-    public InputStream getResourceAsStream(long jobId, long referenceId) throws ResourceException, StorageException;
+	GeneratedMessage getResourceAsMsg(long jobId, long referenceId, String msgType) throws ResourceException, StorageException;
 
-    public GeneratedMessage getResourceAsMsg(long jobId, long referenceId, String msgType) throws ResourceException, StorageException;
-
-    public boolean ping();
+	boolean ping();
 }
