@@ -23,7 +23,6 @@ import pl.nask.hsn2.connector.BusException;
 import pl.nask.hsn2.connector.AMQP.InConnector;
 import pl.nask.hsn2.connector.AMQP.ObjectStoreConnectorImpl;
 import pl.nask.hsn2.connector.REST.DataStoreConnectorImpl;
-import pl.nask.hsn2.protobuff.DataStore.DataResponse;
 import pl.nask.hsn2.protobuff.Object.Attribute;
 import pl.nask.hsn2.protobuff.Object.Attribute.Type;
 import pl.nask.hsn2.protobuff.Object.ObjectData;
@@ -138,7 +137,6 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// WST test
 				// Framework ack last message.
 				frameworkConnector.ackLastMessage();
 				forEachInvocation = new Object() {
@@ -253,26 +251,23 @@ public class ServiceConnectorImplTest {
 				dataStoreConnector.sendPost(withInstanceOf(InputStream.class), anyLong);
 				forEachInvocation = new Object() {
 					void validate(InputStream dataInputStream, long jobId) throws IOException {
+						results.add("jobId=" + jobId);
 						List<Byte> dataAsList = new ArrayList<>();
 						int byteAsInt;
 						while ((byteAsInt = dataInputStream.read()) != -1) {
 							dataAsList.add((byte) byteAsInt);
 						}
 						results.add("data=" + dataAsList);
-						results.add("jobId=" + jobId);
 					}
 				};
 
 				// DataStore connector send get.
 				dataStoreConnector.sendGet(anyLong, anyLong);
 				result = new Delegate() {
-					DataResponse delegate(long jobId, long dataId) {
+					InputStream delegate(long jobId, long dataId) {
 						Reference reference = Reference.newBuilder().setKey(OBJECT_ID).setStore(TASK_ID).build();
 						ByteString data = ByteString.copyFrom(RBT_ROUTINGKEY.getBytes());
-						DataResponse response = DataResponse.newBuilder()
-								.setType(pl.nask.hsn2.protobuff.DataStore.DataResponse.ResponseType.OK).setRef(reference).setData(data)
-								.setError(RBT_EXCHANGE).build();
-						return response;
+						return new ByteArrayInputStream(RBT_EXCHANGE.getBytes());
 					}
 				};
 				forEachInvocation = new Object() {
@@ -599,16 +594,16 @@ public class ServiceConnectorImplTest {
 
 		// Run methods to test.
 		ServiceConnectorImpl sci = new ServiceConnectorImpl(RBT_HOST, RBT_ROUTINGKEY, RBT_EXCHANGE, OS_QUEUE, DS_URL);
-		DataResponse data = sci.getDataStoreData(JOB_ID, OBJECT_ID);
+		InputStream dataStream = sci.getDataStoreData(JOB_ID, OBJECT_ID);
 
 		// Check results.
+		Assert.assertEquals(results.size(), 2);
 		Assert.assertTrue(results.contains("jobId=" + JOB_ID));
 		Assert.assertTrue(results.contains("objectId=" + OBJECT_ID));
-		Assert.assertEquals(data.getError(), RBT_EXCHANGE);
-		Assert.assertEquals(data.getType(), pl.nask.hsn2.protobuff.DataStore.DataResponse.ResponseType.OK);
-		Assert.assertEquals(data.getRef().getKey(), OBJECT_ID);
-		Assert.assertEquals(data.getRef().getStore(), TASK_ID);
-		Assert.assertEquals(data.getData().toStringUtf8(), RBT_ROUTINGKEY);
+		byte[] data = new byte[RBT_EXCHANGE.length()];
+		int numberOfBytesRead = dataStream.read(data);
+		Assert.assertEquals(numberOfBytesRead, RBT_EXCHANGE.length());
+		Assert.assertEquals(data, RBT_EXCHANGE.getBytes());
 	}
 
 	@Test
