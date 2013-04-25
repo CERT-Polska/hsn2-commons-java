@@ -48,7 +48,7 @@ public class InConnectorTest {
 	}
 
 	@Test(expectedExceptions = BusException.class, expectedExceptionsMessageRegExp = "Can't create connection.")
-	public void newConnectionFailed() throws Exception {
+	public void newConnectionWithException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		actions.add(ActionType.NEW_CONNECTION_THROW_IO_EXCEPTION);
 		new InConnector("", DESTINATION);
@@ -88,7 +88,7 @@ public class InConnectorTest {
 	}
 
 	@Test(dependsOnMethods = "newConnectionFailed")
-	public void sendWithAckFailed() throws Exception {
+	public void sendWithAckWithIoException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
 
@@ -112,7 +112,7 @@ public class InConnectorTest {
 	}
 
 	@Test(dependsOnMethods = "newConnectionFailed")
-	public void ackFailed() throws Exception {
+	public void ackWithException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
 
@@ -146,7 +146,7 @@ public class InConnectorTest {
 	}
 
 	@Test(dependsOnMethods = "newConnectionFailed", expectedExceptions = BusException.class, expectedExceptionsMessageRegExp = "Can't receive message.")
-	public void receiveFailed() throws Exception {
+	public void receiveWithException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
 
@@ -165,7 +165,7 @@ public class InConnectorTest {
 	}
 
 	@Test(dependsOnMethods = "newConnectionFailed")
-	public void closeChannelFailed() throws Exception {
+	public void closeChannelWithIoException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
 
@@ -178,7 +178,7 @@ public class InConnectorTest {
 	}
 
 	@Test(dependsOnMethods = "newConnectionFailed")
-	public void closeConnectorFailed1() throws Exception {
+	public void closeAlreadyClosedConnector() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
 
@@ -189,7 +189,7 @@ public class InConnectorTest {
 	}
 
 	@Test(dependsOnMethods = "newConnectionFailed", expectedExceptions = BusException.class)
-	public void closeConnectorFailed2() throws Exception {
+	public void closeConnectorWithIoException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
 

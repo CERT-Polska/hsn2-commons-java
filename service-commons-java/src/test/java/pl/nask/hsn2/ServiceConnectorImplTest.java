@@ -77,7 +77,7 @@ public class ServiceConnectorImplTest {
 			ObjectStoreConnectorImpl objectStoreConnector;
 			DataStoreConnectorImpl dataStoreConnector;
 			{
-				// Framework connector new instance
+				// Framework connector new instance.
 				new InConnector(anyString, withInstanceOf(RbtDestination.class));
 				forEachInvocation = new Object() {
 					void validate(String connectorAddress, RbtDestination destination) throws BusException {
@@ -90,7 +90,7 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// Framework connector send
+				// Framework connector send.
 				frameworkConnector.send(withInstanceOf(byte[].class), anyString);
 				forEachInvocation = new Object() {
 					void validate(byte[] msg, String msgTypeName) throws InvalidProtocolBufferException {
@@ -101,7 +101,7 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// Framework connector send with ack
+				// Framework connector send with ack.
 				frameworkConnector.sendWithAck(withInstanceOf(byte[].class), anyString);
 				forEachInvocation = new Object() {
 					void validate(byte[] msg, String msgTypeName) throws InvalidProtocolBufferException {
@@ -122,7 +122,7 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// Framework connector receive
+				// Framework connector receive.
 				frameworkConnector.receive();
 				result = new Delegate() {
 					byte[] delegate() throws Exception {
@@ -138,7 +138,16 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// ObjectStore connector new instance
+				// WST test
+				// Framework ack last message.
+				frameworkConnector.ackLastMessage();
+				forEachInvocation = new Object() {
+					void validate() {
+						results.add("ackLastMessage");
+					}
+				};
+
+				// ObjectStore connector new instance.
 				new ObjectStoreConnectorImpl(anyString, anyString);
 				forEachInvocation = new Object() {
 					void validate(String connectorAddress, String objectStoreQueueName) {
@@ -147,7 +156,7 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// ObjectStore connector new instance
+				// ObjectStore connector send ObjectStore data.
 				objectStoreConnector.sendObjectStoreData(anyLong, anyInt, withInstanceOf(Iterable.class));
 				result = new Delegate() {
 					ObjectResponse delegate(long jobId, int requestId, Iterable<? extends ObjectData> dataList) {
@@ -168,9 +177,46 @@ public class ServiceConnectorImplTest {
 						}
 					}
 				};
-				// WST test
 
-				// DataStore connector new instance
+				// ObjectStore update data.
+				objectStoreConnector.updateObjectStoreData(anyLong, withInstanceOf(Iterable.class));
+				result = new Delegate() {
+					ObjectResponse delegate(long jobId, Iterable<? extends ObjectData> dataList) {
+						// Add results for assertions.
+						results.add("jobId=" + jobId);
+
+						// Return value for assertions.
+						ObjectResponse or = ObjectResponse.newBuilder().setType(ResponseType.SUCCESS_GET).addAllData(dataList)
+								.addObjects(JOB_ID).addMissing(OBJECT_ID).addConflicts(JOB_ID + OBJECT_ID).setError(OS_QUEUE).build();
+						return or;
+					}
+				};
+				forEachInvocation = new Object() {
+					void validate(long jobId, Iterable<? extends ObjectData> dataList) throws MessageSerializerException {
+						if (actions.remove(ActionType.OS_CON_THROW_STORAGE_EXCEPTION)) {
+							throw new MessageSerializerException();
+						}
+					}
+				};
+
+				// ObjectStore get data.
+				objectStoreConnector.getObjectStoreData(anyLong, withInstanceOf(List.class));
+				result = new Delegate() {
+					ObjectResponse delegate(long jobId, List<Long> objectsId) {
+						results.add("jobId=" + jobId);
+						results.add("objectsId=" + objectsId);
+						Attribute a1 = Attribute.newBuilder().setName("a1").setType(Type.INT).setDataInt(TASK_ID).build();
+						Attribute a2 = Attribute.newBuilder().setName("a2").setType(Type.TIME).setDataTime(OBJECT_ID).build();
+						ObjectData od = ObjectData.newBuilder().setId(OBJECT_ID).addAttrs(a1).addAttrs(a2).build();
+						List<ObjectData> dataList = new ArrayList<>();
+						dataList.add(od);
+						ObjectResponse or = ObjectResponse.newBuilder().setType(ResponseType.SUCCESS_GET).addAllData(dataList)
+								.addObjects(JOB_ID).addMissing(OBJECT_ID).addConflicts(JOB_ID + OBJECT_ID).setError(OS_QUEUE).build();
+						return or;
+					}
+				};
+
+				// DataStore connector new instance.
 				new DataStoreConnectorImpl(anyString);
 				forEachInvocation = new Object() {
 					void validate(String dataStoreAddress) {
@@ -182,7 +228,7 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// DataStore connector ping
+				// DataStore connector ping.
 				dataStoreConnector.ping();
 				result = new Delegate() {
 					public boolean validate() {
@@ -194,7 +240,7 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// DataStore connector send post with byte array
+				// DataStore connector send post with byte array.
 				dataStoreConnector.sendPost(withInstanceOf(byte[].class), anyLong);
 				forEachInvocation = new Object() {
 					void validate(byte[] data, long jobId) {
@@ -203,7 +249,7 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// DataStore connector send post with input stream
+				// DataStore connector send post with input stream.
 				dataStoreConnector.sendPost(withInstanceOf(InputStream.class), anyLong);
 				forEachInvocation = new Object() {
 					void validate(InputStream dataInputStream, long jobId) throws IOException {
@@ -217,7 +263,7 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// DataStore connector send get
+				// DataStore connector send get.
 				dataStoreConnector.sendGet(anyLong, anyLong);
 				result = new Delegate() {
 					DataResponse delegate(long jobId, long dataId) {
@@ -236,7 +282,7 @@ public class ServiceConnectorImplTest {
 					}
 				};
 
-				// DataStore connector get resource as stream
+				// DataStore connector get resource as stream.
 				dataStoreConnector.getResourceAsStream(anyLong, anyLong);
 				result = new Delegate() {
 					InputStream delegate(long jobId, long referenceId) {
@@ -674,28 +720,151 @@ public class ServiceConnectorImplTest {
 	}
 
 	@Test
-	public void updateObjectStoreData() {
-		// WST to do
+	public void updateObjectStoreData() throws Exception {
+		// Prepare test data.
+		mockConnectors();
+		Attribute a1 = Attribute.newBuilder().setName("a1").setType(Type.INT).setDataInt(TASK_ID).build();
+		Attribute a2 = Attribute.newBuilder().setName("a2").setType(Type.TIME).setDataTime(OBJECT_ID).build();
+		ObjectData od = ObjectData.newBuilder().setId(OBJECT_ID).addAttrs(a1).addAttrs(a2).build();
+		List<ObjectData> dataList = new ArrayList<>();
+		dataList.add(od);
+
+		// Run methods to test.
+		ServiceConnectorImpl sci = new ServiceConnectorImpl(RBT_HOST, RBT_ROUTINGKEY, RBT_EXCHANGE, OS_QUEUE, DS_URL);
+		ObjectResponse or = sci.updateObjectStoreData(JOB_ID, dataList);
+
+		// Check results.
+		Assert.assertTrue(results.contains("jobId=" + JOB_ID));
+
+		Assert.assertEquals(or.getType(), ResponseType.SUCCESS_GET);
+		Assert.assertEquals(or.getError(), OS_QUEUE);
+
+		Assert.assertEquals(or.getDataCount(), 1);
+		od = or.getData(0);
+		Assert.assertEquals(od.getAttrsCount(), 2);
+		a1 = od.getAttrs(0);
+		Assert.assertEquals(a1.getName(), "a1");
+		Assert.assertEquals(a1.getType(), Type.INT);
+		Assert.assertEquals(a1.getDataInt(), TASK_ID);
+		a1 = od.getAttrs(1);
+		Assert.assertEquals(a1.getName(), "a2");
+		Assert.assertEquals(a1.getType(), Type.TIME);
+		Assert.assertEquals(a1.getDataTime(), OBJECT_ID);
+
+		Assert.assertEquals(or.getConflictsCount(), 1);
+		Assert.assertEquals(or.getConflicts(0), JOB_ID + OBJECT_ID);
+
+		Assert.assertEquals(or.getMissingCount(), 1);
+		Assert.assertEquals(or.getMissing(0), OBJECT_ID);
+
+		Assert.assertEquals(or.getObjectsCount(), 1);
+		Assert.assertEquals(or.getObjects(0), JOB_ID);
+	}
+
+	@Test
+	public void updateObject() throws Exception {
+		// Prepare test data.
+		mockConnectors();
+		Set<pl.nask.hsn2.bus.operations.Attribute> attributes = new HashSet<>();
+		attributes.add(new pl.nask.hsn2.bus.operations.Attribute("a1", AttributeType.BOOL, true));
+		attributes.add(new pl.nask.hsn2.bus.operations.Attribute("a2", AttributeType.BOOL, false));
+		pl.nask.hsn2.bus.operations.ObjectData objectData = new pl.nask.hsn2.bus.operations.ObjectData(JOB_ID, attributes);
+
+		// Run methods to test.
+		ServiceConnectorImpl sci = new ServiceConnectorImpl(RBT_HOST, RBT_ROUTINGKEY, RBT_EXCHANGE, OS_QUEUE, DS_URL);
+		pl.nask.hsn2.bus.operations.ObjectResponse or = sci.updateObject(JOB_ID, objectData);
+
+		// Check results.
+		System.out.println(results);
+		Assert.assertTrue(results.contains("jobId=" + JOB_ID));
+		Assert.assertEquals(or.getData().size(), 1);
+		for (pl.nask.hsn2.bus.operations.ObjectData data : or.getData()) {
+			for (pl.nask.hsn2.bus.operations.Attribute attr : data.getAttributes()) {
+				results.add("" + attr);
+			}
+		}
+		Assert.assertTrue(results.contains("Attribute={name=a1,type=BOOL,value=true}"));
+		Assert.assertTrue(results.contains("Attribute={name=a2,type=BOOL,value=false}"));
+		Assert.assertNull(or.getError());
+		Assert.assertNotNull(or.getConflicts());
+		Assert.assertEquals(or.getConflicts().size(), 0);
+		Assert.assertNotNull(or.getObjects());
+		Assert.assertEquals(or.getObjects().size(), 0);
+		Assert.assertNotNull(or.getMissing());
+		Assert.assertEquals(or.getMissing().size(), 0);
+	}
+
+	@Test(expectedExceptions = StorageException.class)
+	public void updateObjectWithException() throws Exception {
+		// Prepare test data.
+		mockConnectors();
+		Set<pl.nask.hsn2.bus.operations.Attribute> attributes = new HashSet<>();
+		pl.nask.hsn2.bus.operations.ObjectData objectData = new pl.nask.hsn2.bus.operations.ObjectData(JOB_ID, attributes);
+		actions.add(ActionType.OS_CON_THROW_STORAGE_EXCEPTION);
+
+		// Run methods to test.
+		ServiceConnectorImpl sci = new ServiceConnectorImpl(RBT_HOST, RBT_ROUTINGKEY, RBT_EXCHANGE, OS_QUEUE, DS_URL);
+		sci.updateObject(JOB_ID, objectData);
+	}
+
+	@Test
+	public void getObjectStoreData() throws Exception {
+		// Prepare test data.
+		mockConnectors();
+		List<Long> objectsId = new ArrayList<>();
+		objectsId.add(JOB_ID);
+		objectsId.add(OBJECT_ID);
+
+		// Run methods to test.
+		ServiceConnectorImpl sci = new ServiceConnectorImpl(RBT_HOST, RBT_ROUTINGKEY, RBT_EXCHANGE, OS_QUEUE, DS_URL);
+		ObjectResponse or = sci.getObjectStoreData(JOB_ID, objectsId);
+
+		// Check results.
+		Assert.assertTrue(results.contains("jobId=" + JOB_ID));
+		Assert.assertTrue(results.contains("objectsId=" + objectsId));
+
+		Assert.assertEquals(or.getType(), ResponseType.SUCCESS_GET);
+		Assert.assertEquals(or.getError(), OS_QUEUE);
+
+		Assert.assertEquals(or.getDataCount(), 1);
+		ObjectData od = or.getData(0);
+		Assert.assertEquals(od.getAttrsCount(), 2);
+		Attribute attr = od.getAttrs(0);
+		Assert.assertEquals(attr.getName(), "a1");
+		Assert.assertEquals(attr.getType(), Type.INT);
+		Assert.assertEquals(attr.getDataInt(), TASK_ID);
+		attr = od.getAttrs(1);
+		Assert.assertEquals(attr.getName(), "a2");
+		Assert.assertEquals(attr.getType(), Type.TIME);
+		Assert.assertEquals(attr.getDataTime(), OBJECT_ID);
+
+		Assert.assertEquals(or.getConflictsCount(), 1);
+		Assert.assertEquals(or.getConflicts(0), JOB_ID + OBJECT_ID);
+
+		Assert.assertEquals(or.getMissingCount(), 1);
+		Assert.assertEquals(or.getMissing(0), OBJECT_ID);
+
+		Assert.assertEquals(or.getObjectsCount(), 1);
+		Assert.assertEquals(or.getObjects(0), JOB_ID);
+	}
+
+	@Test
+	public void ignoreLastTaskRequest() throws Exception {
+		// Prepare test data.
+		mockConnectors();
+
+		// Run methods to test.
+		ServiceConnectorImpl sci = new ServiceConnectorImpl(RBT_HOST, RBT_ROUTINGKEY, RBT_EXCHANGE, OS_QUEUE, DS_URL);
+		sci.ignoreLastTaskRequest();
+
+		// Check results.
+		Assert.assertEquals(results.size(), 1);
+		Assert.assertTrue(results.contains("ackLastMessage"));
 	}
 
 	// ##############################################################
 	@Test(enabled = false)
-	public void getObjectStoreData() {
-		throw new RuntimeException("Test not implemented");
-	}
-
-	@Test(enabled = false)
-	public void ignoreLastTaskRequest() {
-		throw new RuntimeException("Test not implemented");
-	}
-
-	@Test(enabled = false)
 	public void toStringCheck() {
-		throw new RuntimeException("Test not implemented");
-	}
-
-	@Test(enabled = false)
-	public void updateObject() {
 		throw new RuntimeException("Test not implemented");
 	}
 }

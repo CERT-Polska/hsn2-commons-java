@@ -150,7 +150,7 @@ public class ObjectStoreConnectorImplTest {
 	}
 
 	@Test(dependsOnGroups = "InConnectorTest", expectedExceptions = StorageException.class)
-	public void queryMsgSendFailed() throws Exception {
+	public void queryMsgSendThrowsStorageException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		mockDeclareOK(declareOk, channel);
 
