@@ -54,7 +54,7 @@ public class InConnectorTest {
 		new InConnector("", DESTINATION);
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed")
+	@Test(dependsOnMethods = "newConnectionWithException")
 	public void send() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -64,7 +64,7 @@ public class InConnectorTest {
 		Assert.assertEquals(result, EXCHANGE + SERVICE + TYPE + Arrays.toString(MESSAGE) + CLOSE_STRING);
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed")
+	@Test(dependsOnMethods = "newConnectionWithException")
 	public void sendFailed() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -77,7 +77,7 @@ public class InConnectorTest {
 		Assert.assertEquals(result, CLOSE_STRING);
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed")
+	@Test(dependsOnMethods = "newConnectionWithException")
 	public void sendWithAck() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -87,7 +87,7 @@ public class InConnectorTest {
 		Assert.assertEquals(result, EXCHANGE + SERVICE + TYPE + Arrays.toString(MESSAGE) + "0false" + CLOSE_STRING);
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed")
+	@Test(dependsOnMethods = "newConnectionWithException")
 	public void sendWithAckWithIoException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -101,7 +101,7 @@ public class InConnectorTest {
 		Assert.assertEquals(result, EXCHANGE + SERVICE + TYPE + Arrays.toString(MESSAGE) + CLOSE_STRING);
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed")
+	@Test(dependsOnMethods = "newConnectionWithException")
 	public void ack() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -111,7 +111,7 @@ public class InConnectorTest {
 		Assert.assertEquals(result, "0false" + CLOSE_STRING);
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed")
+	@Test(dependsOnMethods = "newConnectionWithException")
 	public void ackWithException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -124,7 +124,7 @@ public class InConnectorTest {
 		Assert.assertEquals(result, CLOSE_STRING);
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed")
+	@Test(dependsOnMethods = "newConnectionWithException")
 	public void receive() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -134,7 +134,7 @@ public class InConnectorTest {
 		Assert.assertEquals(Arrays.toString(msg), Arrays.toString(MESSAGE));
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed", expectedExceptions = IllegalArgumentException.class)
+	@Test(dependsOnMethods = "newConnectionWithException", expectedExceptions = IllegalArgumentException.class)
 	public void receiveWrongType() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -145,7 +145,7 @@ public class InConnectorTest {
 		Assert.assertEquals(Arrays.toString(msg), Arrays.toString(MESSAGE) + CLOSE_STRING);
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed", expectedExceptions = BusException.class, expectedExceptionsMessageRegExp = "Can't receive message.")
+	@Test(dependsOnMethods = "newConnectionWithException", expectedExceptions = BusException.class, expectedExceptionsMessageRegExp = "Can't receive message.")
 	public void receiveWithException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -154,7 +154,7 @@ public class InConnectorTest {
 		ic.receive();
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed")
+	@Test(dependsOnMethods = "newConnectionWithException")
 	public void closeChannel() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -164,7 +164,7 @@ public class InConnectorTest {
 		Assert.assertEquals(result, EXCHANGE + SERVICE + EXCHANGE + SERVICE + CLOSE_STRING);
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed")
+	@Test(dependsOnMethods = "newConnectionWithException")
 	public void closeChannelWithIoException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -177,7 +177,7 @@ public class InConnectorTest {
 		Assert.assertEquals(result, CLOSE_STRING);
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed")
+	@Test(dependsOnMethods = "newConnectionWithException")
 	public void closeAlreadyClosedConnector() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
@@ -188,7 +188,7 @@ public class InConnectorTest {
 		Assert.assertEquals(result, "");
 	}
 
-	@Test(dependsOnMethods = "newConnectionFailed", expectedExceptions = BusException.class)
+	@Test(dependsOnMethods = "newConnectionWithException", expectedExceptions = BusException.class)
 	public void closeConnectorWithIoException() throws Exception {
 		rbtMock(connectionFactory, connection, channel, consumer);
 		InConnector ic = new InConnector("", DESTINATION);
