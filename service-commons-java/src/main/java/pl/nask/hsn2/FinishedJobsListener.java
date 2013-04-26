@@ -116,6 +116,5 @@ public class FinishedJobsListener implements Runnable {
 
 	public void shutdown() {
 		isMainLoopEnabled.set(false);
-		Thread.currentThread().interrupt();
 	}
 }

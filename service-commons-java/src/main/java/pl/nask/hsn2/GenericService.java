@@ -59,6 +59,8 @@ public class GenericService implements Runnable{
 
 	private UncaughtExceptionHandler defaultUncaughtExceptionHandler;
 
+	private Thread finishedJobsListenerThread;
+
     public GenericService(TaskFactory jobFactory, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
         this(jobFactory, null, maxThreads, rbtCommonExchangeName, rbtNotifyExchangeName);
     }
@@ -97,7 +99,8 @@ public class GenericService implements Runnable{
 	
 	private void startFinishedJobsListener(){
 		finishedJobsListener.initialize(connectorAddress, notifyExchangeName);
-		new Thread(finishedJobsListener).start();
+		finishedJobsListenerThread = new Thread(finishedJobsListener, "finishedJobsListener");
+		finishedJobsListenerThread.start();
 	}
 	
 	public void stop() {
