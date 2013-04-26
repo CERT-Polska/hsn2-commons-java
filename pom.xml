@@ -9,9 +9,8 @@
 	<description>HSN 2.0 - common libraries</description>
 
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<version.jmockit>0.999.15</version.jmockit>
-		<version.testing>6.7</version.testing>
+		<version.jmockit>1.0</version.jmockit>
+		<version.testing>6.8</version.testing>
 		<version.slf4j>1.6.1</version.slf4j>
 		<version.commons.cli>1.2</version.commons.cli>
 	</properties>
