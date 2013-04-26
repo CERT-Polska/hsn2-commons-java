@@ -92,7 +92,8 @@ public class DataStoreConnectorImpl implements DataStoreConnector {
 	        int responseCode = client.getResponseCode();
 			LOGGER.debug("Response code: {}", responseCode);
 	        if (responseCode == SC_CREATED) {
-	            long key = Long.parseLong(client.getHeaderField("Content-ID"));
+	        	String keyFromHeader = client.getHeaderField("Content-ID");
+	            long key = Long.parseLong(keyFromHeader);
 	            DataResponse dr = new DataResponse(key);
 	            return dr;
 	        } else {
@@ -127,9 +128,7 @@ public class DataStoreConnectorImpl implements DataStoreConnector {
 
 	@Override
 	public GeneratedMessage getResourceAsMsg(long jobId, long referenceId, String msgType) throws ResourceException, StorageException {
-
 	    String fullAddress = DSUtils.dsAddress(address, jobId, referenceId);
-
         try{
             RestRequestor client = RestRequestor.get(fullAddress);
 			try (InputStream inputStream = client.getInputStream()) {

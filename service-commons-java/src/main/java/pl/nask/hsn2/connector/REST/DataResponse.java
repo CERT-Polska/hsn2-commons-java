@@ -58,6 +58,6 @@ public class DataResponse {
 
 	@Override
 	public String toString() {
-		return DataResponse.class.getSimpleName() + "{success=" + isSuccesful + ",key=" + keyId + "}";
+		return DataResponse.class.getSimpleName() + "{success=" + isSuccesful + ",key=" + keyId + ",errorMsg=" + error + "}";
 	}
 }
