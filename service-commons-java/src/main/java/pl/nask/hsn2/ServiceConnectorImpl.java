@@ -35,9 +35,9 @@ import pl.nask.hsn2.connector.BusException;
 import pl.nask.hsn2.connector.ObjectStoreConnector;
 import pl.nask.hsn2.connector.AMQP.InConnector;
 import pl.nask.hsn2.connector.AMQP.ObjectStoreConnectorImpl;
+import pl.nask.hsn2.connector.REST.DataResponse;
 import pl.nask.hsn2.connector.REST.DataStoreConnector;
 import pl.nask.hsn2.connector.REST.DataStoreConnectorImpl;
-import pl.nask.hsn2.protobuff.DataStore.DataResponse;
 import pl.nask.hsn2.protobuff.Object.ObjectData;
 import pl.nask.hsn2.protobuff.ObjectStore.ObjectResponse;
 import pl.nask.hsn2.protobuff.Process.TaskAccepted;
@@ -160,12 +160,12 @@ public class ServiceConnectorImpl implements ServiceConnector {
 	}
 
 	@Override
-	public DataResponse sendDataStoreData(long jobId, InputStream is) throws ResourceException, IOException{
+	public DataResponse sendDataStoreData(long jobId, InputStream is) throws IOException{
 	    return dataStoreConnector.sendPost(is, jobId);
 	}
 
 	@Override
-	public DataResponse getDataStoreData(long jobId, long dataId) throws IOException {
+	public InputStream getDataStoreData(long jobId, long dataId) throws IOException {
 		return dataStoreConnector.sendGet(jobId, dataId);
 	}
 
