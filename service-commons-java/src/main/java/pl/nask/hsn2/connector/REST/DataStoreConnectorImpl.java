@@ -89,8 +89,9 @@ public class DataStoreConnectorImpl implements DataStoreConnector {
 	    try (InputStream inputStream = client.getInputStream()) {
 	        String message = msg(inputStream);
 	        LOGGER.debug(message);
-	        LOGGER.debug("Response code: {}", client.getResponseCode());
-	        if (client.getResponseCode() == SC_CREATED) {
+	        int responseCode = client.getResponseCode();
+			LOGGER.debug("Response code: {}", responseCode);
+	        if (responseCode == SC_CREATED) {
 	            long key = Long.parseLong(client.getHeaderField("Content-ID"));
 	            DataResponse dr = new DataResponse(key);
 	            return dr;
@@ -106,24 +107,21 @@ public class DataStoreConnectorImpl implements DataStoreConnector {
 	@Override
 	public InputStream getResourceAsStream(long jobId, long referenceId) throws ResourceException, StorageException {
 	    String fullAddress = DSUtils.dsAddress(address, jobId, referenceId);
-	    InputStream errorStream = null;
 	    
 	    try {
-	        RestRequestor client = RestRequestor.get(fullAddress);
+	    	RestRequestor client = RestRequestor.get(fullAddress);
 	        LOGGER.debug(client.getResponseMessage());
 	        int respCode = client.getResponseCode();
 	        if (respCode == SC_OK){
 	            return client.getInputStream();
 	        } else {
-	        	errorStream = client.getErrorStream();
-	        	String errorMessage = msg(errorStream);
-	        	
-	        	throw new ResourceException(String.format("Expected dataStore to respond with code 200, got %s. Message is: %s, %s",respCode, client.getResponseMessage(), errorMessage));
+	        	try (InputStream errorStream = client.getErrorStream()) {
+	        		String errorMessage = msg(errorStream);
+	        		throw new ResourceException(String.format("Expected dataStore to respond with code 200, got %s. Message is: %s, %s",respCode, client.getResponseMessage(), errorMessage));
+	        	}
 	        }
 	    } catch (IOException e) {
 	        throw new StorageException("Storage error (IOException)", e);
-	    } finally {
-	    	IOUtils.closeQuietly(errorStream);
 	    }
 	}
 
@@ -132,20 +130,18 @@ public class DataStoreConnectorImpl implements DataStoreConnector {
 
 	    String fullAddress = DSUtils.dsAddress(address, jobId, referenceId);
 
-        InputStream inputStream = null;
         try{
             RestRequestor client = RestRequestor.get(fullAddress);
-            inputStream = client.getInputStream();
-            LOGGER.debug(client.getResponseMessage());
-            if (client.getResponseCode() == SC_OK) {
-                return buildMessageObject(inputStream, msgType);
-            } else {
-                throw new StorageException("Error getting object from DataStore: " + msg(inputStream));
-            }
+			try (InputStream inputStream = client.getInputStream()) {
+				LOGGER.debug(client.getResponseMessage());
+				if (client.getResponseCode() == SC_OK) {
+					return buildMessageObject(inputStream, msgType);
+				} else {
+					throw new StorageException("Error getting object from DataStore: " + msg(inputStream));
+				}
+			}
         } catch (IOException e) {
             throw new StorageException("Storage error (IOException)", e);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
         }
 	}
 
