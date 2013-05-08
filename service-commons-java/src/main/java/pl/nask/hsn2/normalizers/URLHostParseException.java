@@ -20,20 +20,20 @@
 package pl.nask.hsn2.normalizers;
 
 public class URLHostParseException extends Exception {
+	/**
+	 * Serial id.
+	 */
+	private static final long serialVersionUID = 7488067343336128732L;
 
 	public URLHostParseException(String string) {
 		super(string);
 	}
+
 	public URLHostParseException() {
 		super();
 	}
-	public URLHostParseException(String msg,Throwable t) {
-		super(msg,t);
+
+	public URLHostParseException(String msg, Throwable t) {
+		super(msg, t);
 	}
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 7488067343336128732L;
-
 }

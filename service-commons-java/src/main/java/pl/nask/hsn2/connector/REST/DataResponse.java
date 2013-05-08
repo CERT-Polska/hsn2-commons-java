@@ -55,4 +55,9 @@ public class DataResponse {
 	public String getError() {
 		return error;
 	}
+
+	@Override
+	public String toString() {
+		return DataResponse.class.getSimpleName() + "{success=" + isSuccesful + ",key=" + keyId + ",errorMsg=" + error + "}";
+	}
 }
