@@ -24,13 +24,12 @@ import java.io.InputStream;
 import java.util.List;
 
 import pl.nask.hsn2.connector.BusException;
-import pl.nask.hsn2.protobuff.DataStore.DataResponse;
+import pl.nask.hsn2.connector.REST.DataResponse;
 import pl.nask.hsn2.protobuff.Object.ObjectData;
 import pl.nask.hsn2.protobuff.ObjectStore.ObjectResponse;
 import pl.nask.hsn2.protobuff.Process.TaskRequest;
 
 public interface ServiceConnector {
-
     TaskRequest getTaskRequest() throws BusException;
 
     void sendTaskAccepted(long jobId, int requestId) throws BusException;
@@ -44,6 +43,7 @@ public interface ServiceConnector {
      * use saveObjects() instead
      */
     ObjectResponse sendObjectStoreData(long jobId, int requestId, Iterable<? extends ObjectData> dataList) throws StorageException;
+
     pl.nask.hsn2.bus.operations.ObjectResponse saveObjects(long jobId, List<pl.nask.hsn2.bus.operations.ObjectData> dataList) throws StorageException;
 
     void sendTaskError(long jobId, int reqId, ParameterException e);
@@ -62,15 +62,14 @@ public interface ServiceConnector {
     ObjectResponse updateObjectStoreData(long jobId, Iterable<? extends ObjectData> dataList) throws StorageException;
     
     pl.nask.hsn2.bus.operations.ObjectResponse updateObject(long jobId, pl.nask.hsn2.bus.operations.ObjectData objectData) throws StorageException;
-
     
     ObjectResponse getObjectStoreData(long jobId, List<Long> objectsId) throws StorageException;
 
     DataResponse sendDataStoreData(long jobId, byte[] data) throws IOException;
 
-    DataResponse sendDataStoreData(long jobId, InputStream is) throws ResourceException, IOException;
+    DataResponse sendDataStoreData(long jobId, InputStream is) throws IOException;
 
-    DataResponse getDataStoreData(long jobId, long dataId) throws IOException;
+    InputStream getDataStoreData(long jobId, long dataId) throws IOException;
 
     InputStream getDataStoreDataAsStream(long jobId, long referenceId) throws ResourceException, StorageException;
 

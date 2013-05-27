@@ -20,15 +20,21 @@
 package pl.nask.hsn2;
 
 public class RequiredParameterMissingException extends ParameterException {
-    private static final long serialVersionUID = -2187948375051589155L;
-    private String paramName;
+	/**
+	 * Serial id.
+	 */
+	private static final long serialVersionUID = -2187948375051589155L;
+	/**
+	 * Parameter name.
+	 */
+	private String paramName;
 
-    public RequiredParameterMissingException(String paramName) {
-        super (String.format("No parameter with name=%s found", paramName));
-        this.paramName = paramName;
-    }
+	public RequiredParameterMissingException(String paramName) {
+		super(String.format("No parameter with name=%s found", paramName));
+		this.paramName = paramName;
+	}
 
-    public String getParamName() {
-        return paramName;
-    }
+	public String getParamName() {
+		return paramName;
+	}
 }

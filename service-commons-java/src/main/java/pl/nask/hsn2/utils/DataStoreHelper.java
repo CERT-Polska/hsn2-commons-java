@@ -29,76 +29,83 @@ import org.slf4j.LoggerFactory;
 import pl.nask.hsn2.ResourceException;
 import pl.nask.hsn2.ServiceConnector;
 import pl.nask.hsn2.StorageException;
-import pl.nask.hsn2.protobuff.DataStore;
+import pl.nask.hsn2.connector.REST.DataResponse;
 
 public abstract class DataStoreHelper {
 	private static final Logger LOG = LoggerFactory.getLogger(DataStoreHelper.class);
-	
 	public static final long DEFAULT_REFERENCE_ID = -1;
-	
-    public static final int DEFAULT_STORE_ID = 0;
+	public static final int DEFAULT_STORE_ID = 0;
 
 	private DataStoreHelper() {
-		// util class
+		// Utility class. No instantiation allowed.
 	}
-	
+
 	/**
-	 * saves the given content in the DataStore 
+	 * Saves the given content in the DataStore.
 	 * 
-	 * @param connector connection to be used for saving the object
-	 * @param jobId data context (id of the job)
-	 * @param contentAsBytes content to be saved
-	 * @return
-	 * 	ID of the resource in the DataStore
-	 * @throws StorageException if the save was unsuccessful.
+	 * @param connector
+	 *            Connection to be used for saving the object.
+	 * @param jobId
+	 *            Data context (id of the job).
+	 * @param contentAsBytes
+	 *            Content to be saved.
+	 * @return ID of the resource in the DataStore.
+	 * @throws StorageException
+	 *             In case of error during storage process.
 	 */
 	public static long saveInDataStore(ServiceConnector connector, long jobId, byte[] contentAsBytes) throws StorageException {
-        try {
-            LOG.debug("Adding new data to the data store...");
-            DataStore.DataResponse response = connector.sendDataStoreData(jobId, contentAsBytes);
-            if (DataStore.DataResponse.ResponseType.OK.equals(response.getType())) {
-                long referenceId = response.getRef().getKey();
-                LOG.debug("...New data added to data store. Reference id : {}", referenceId);
-                return referenceId;
-            } else {
-            	LOG.debug("Failed to add new data to data store, response is {}", response);
-            	throw new StorageException("Error saving bytes in data store, response is: " + response);
-            }
-        } catch (IOException e) {
-            String msg = "Error adding bytes to data store.";
-            LOG.error(msg, e);
-            throw new StorageException(msg, e);
-        }
-    }
+		try {
+			LOG.debug("Adding new data to the data store...");
+			DataResponse response = connector.sendDataStoreData(jobId, contentAsBytes);
+			return processResponse(response);
+		} catch (IOException e) {
+			String msg = "Error adding bytes to data store.";
+			LOG.error(msg, e);
+			throw new StorageException(msg, e);
+		}
+	}
 
-    public static long saveInDataStore(ServiceConnector connector, long jobId, InputStream is) throws StorageException, ResourceException {
-        try {
-            LOG.debug("Adding new data to the data store...");
-            DataStore.DataResponse response = connector.sendDataStoreData(jobId, is);
-            if (response.getType().equals(DataStore.DataResponse.ResponseType.OK)) {
-                long referenceId = response.getRef().getKey();
-                LOG.debug("...New data added to data store. Reference id : {}", referenceId);
-                return referenceId;
-            } else {
-                LOG.debug("Failed to add new data to data store.");
-                throw new StorageException("Error saving bytes in data store");
-            }
-        } catch (IOException e) {
-            String msg = "Error adding bytes to data store.";
-            LOG.error(msg, e);
-            throw new StorageException(msg, e);
-        } finally {
-        	IOUtils.closeQuietly(is);
-        }
-    }
+	public static long saveInDataStore(ServiceConnector connector, long jobId, InputStream is) throws StorageException {
+		try {
+			LOG.debug("Adding new data to the data store...");
+			DataResponse response = connector.sendDataStoreData(jobId, is);
+			return processResponse(response);
+		} catch (IOException e) {
+			String msg = "Error adding bytes to data store.";
+			LOG.error(msg, e);
+			throw new StorageException(msg, e);
+		} finally {
+			IOUtils.closeQuietly(is);
+		}
+	}
 
-    public static InputStream getFileAsInputStream(ServiceConnector connector, long jobId, long referenceId) throws StorageException {
-        LOG.debug("Getting file from data store, referenceId: {}", referenceId);
+	/**
+	 * Process DataStore response.
+	 * 
+	 * @param response
+	 *            DS response.
+	 * @return Newly created object's key id.
+	 * @throws StorageException
+	 *             In case of error during storage process.
+	 */
+	private static long processResponse(DataResponse response) throws StorageException {
+		if (response.isSuccesful()) {
+			long referenceId = response.getKeyId();
+			LOG.debug("...New data added to data store. Reference id : {}", referenceId);
+			return referenceId;
+		} else {
+			LOG.debug("Failed to add new data to data store.");
+			throw new StorageException("Error saving bytes in data store");
+		}
+	}
 
-        try {
-            return connector.getDataStoreDataAsStream(jobId, referenceId);
-        } catch (ResourceException e) {
-            throw new StorageException("Error getting resource from data store.", e);
-        }
-    }
+	public static InputStream getFileAsInputStream(ServiceConnector connector, long jobId, long referenceId) throws StorageException {
+		LOG.debug("Getting file from data store, referenceId: {}", referenceId);
+
+		try {
+			return connector.getDataStoreDataAsStream(jobId, referenceId);
+		} catch (ResourceException e) {
+			throw new StorageException("Error getting resource from data store.", e);
+		}
+	}
 }

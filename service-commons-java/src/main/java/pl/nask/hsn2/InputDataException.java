@@ -20,6 +20,9 @@
 package pl.nask.hsn2;
 
 public class InputDataException extends Exception {
+	/**
+	 * Serial id.
+	 */
 	private static final long serialVersionUID = -2422280590777326942L;
 
 	public InputDataException(String msg) {
