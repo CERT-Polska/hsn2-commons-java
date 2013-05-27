@@ -32,11 +32,10 @@ import pl.nask.hsn2.task.TaskFactory;
 public abstract class ServiceMain implements Daemon {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServiceMain.class);
 	private volatile DaemonController daemonCtrl = null;
-	protected CommandLineParams cmd;
+	private CommandLineParams cmd;
 	private GenericService service;
 	private Thread serviceRunner;
-	
-	protected abstract CommandLineParams parseArguments(String[] args);
+		
 	protected abstract void prepareService();
 	protected abstract TaskFactory createTaskFactory();
 	
@@ -49,7 +48,8 @@ public abstract class ServiceMain implements Daemon {
 	@Override
 	public void init(DaemonContext context) {
 		daemonCtrl = context.getController();
-		cmd = parseArguments(context.getArguments());
+		cmd = newCommandLineParams();
+		cmd.parseParams(context.getArguments());
 		prepareService();
 		createService();
 	}
@@ -92,5 +92,12 @@ public abstract class ServiceMain implements Daemon {
 			}
 		}
 	}
+
+	protected CommandLineParams getCommandLineParams() {
+		return cmd;
+	}
 	
+	protected CommandLineParams newCommandLineParams() {
+		return new CommandLineParams();
+	}
 }
