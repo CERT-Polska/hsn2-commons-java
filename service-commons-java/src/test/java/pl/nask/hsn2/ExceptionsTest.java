@@ -16,9 +16,9 @@ public class ExceptionsTest {
 
 	@Test
 	public void testContextSizeLimitExceeded() {
-		ContextSizeLimitExceeded e = new ContextSizeLimitExceeded(MSG);
+		ContextSizeLimitExceededException e = new ContextSizeLimitExceededException(MSG);
 		Assert.assertEquals(e.getMessage(), MSG);
-		ContextSizeLimitExceeded e2 = new ContextSizeLimitExceeded(MSG, NPE);
+		ContextSizeLimitExceededException e2 = new ContextSizeLimitExceededException(MSG, NPE);
 		Assert.assertEquals(e2.getCause(), NPE);
 		LOGGER.info("testContextSizeLimitExceeded passed");
 	}

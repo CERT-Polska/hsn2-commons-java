@@ -19,13 +19,13 @@
 
 package pl.nask.hsn2;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +34,8 @@ import pl.nask.hsn2.task.TaskContextFactory;
 import pl.nask.hsn2.task.TaskFactory;
 
 
-public class GenericService {
-    private static final Logger LOG = LoggerFactory.getLogger(GenericService.class);
+public class GenericService implements Runnable{
+    private static final Logger LOGGER = LoggerFactory.getLogger(GenericService.class);
 
     private String connectorAddress = null;
 	private String objectStoreQueueName = null;
@@ -46,7 +46,7 @@ public class GenericService {
     private final String notifyExchangeName;
 
     private ExecutorService executor;
-    private int maxThreads;
+    private int maxThreads = 1;
     private final CountDownLatch startUpLatch = new CountDownLatch(1);
     
     private FinishedJobsListener finishedJobsListener;
@@ -57,6 +57,10 @@ public class GenericService {
 
     private TaskContextFactory contextFactory;
 
+	private UncaughtExceptionHandler defaultUncaughtExceptionHandler;
+
+	private Thread finishedJobsListenerThread;
+
     public GenericService(TaskFactory jobFactory, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
         this(jobFactory, null, maxThreads, rbtCommonExchangeName, rbtNotifyExchangeName);
     }
@@ -64,45 +68,48 @@ public class GenericService {
     public GenericService(TaskFactory jobFactory, TaskContextFactory contextFactory, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
         this.jobFactory = jobFactory;
         this.contextFactory = contextFactory;
-        if (maxThreads == null || maxThreads == 0) {
-            this.maxThreads = 1;
-        } else {
+        if (maxThreads != null && maxThreads > 0) {
             this.maxThreads = maxThreads;
         }
         executor = Executors.newFixedThreadPool(this.maxThreads);
-        taskProcessors = new ArrayList<TaskProcessor>(this.maxThreads);
+        taskProcessors = new ArrayList<>(this.maxThreads);
         this.commonExchangeName = rbtCommonExchangeName;
         this.notifyExchangeName = rbtNotifyExchangeName;
         this.finishedJobsListener = new FinishedJobsListener();
     }
 
-	public void run() throws InterruptedException {
-	    List<Future<Void>> results = start();
-        for (Future<Void> res: results) {
-            LOG.info("TaskProcessor {} started.", res);
-        }
-
-		finishedJobsListener.initialize(connectorAddress, notifyExchangeName);
-		new Thread(finishedJobsListener).start();
-		startUpLatch.countDown();
+	public void run() {
+		Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler);
+	    startTaskProcessors();
+        startFinishedJobsListener();
+        startUpLatch.countDown();
     }
 
-	List<Future<Void>> start() throws InterruptedException {
-		List<Future<Void>> results = new ArrayList<Future<Void>>(maxThreads);
-		for (int i=0; i<maxThreads; i++) {
+	List<Future<Void>> startTaskProcessors() {
+		List<Future<Void>> results = new ArrayList<>(maxThreads);
+		for (int i = 0; i < maxThreads; i++) {
 	        TaskProcessor processor = prepareTaskProcessor();
             taskProcessors.add(processor);
-            results.add(executor.submit(processor));
+            Future<Void> result = executor.submit(processor);
+            results.add(result);
+            LOGGER.info("TaskProcessor {} started.", result);
         }
 	    return results;
 	}
 	
+	private void startFinishedJobsListener(){
+		finishedJobsListener.initialize(connectorAddress, notifyExchangeName);
+		finishedJobsListenerThread = new Thread(finishedJobsListener, "finishedJobsListener");
+		finishedJobsListenerThread.start();
+	}
+	
 	public void stop() {
-		LOG.info("Shutting down");
+		LOGGER.info("Shutting down");
 		for (TaskProcessor p: taskProcessors) {
 			p.setCanceled();
 		}
-		executor.shutdownNow();		
+		executor.shutdownNow();
+		finishedJobsListener.shutdown();
 	}
 
     private TaskProcessor prepareTaskProcessor() {
@@ -146,23 +153,8 @@ public class GenericService {
 		this.serviceQueueName = serviceQueueName;
 	}
 	
-	public boolean waitForStartUp() {
-		return waitForStartUp(0l);
-	}
-	
-	public boolean waitForStartUp(long  waitTime) {
-		try {
-			if (waitTime < 1l) {
-				startUpLatch.await();
-				return true;
-			} else {
-				return startUpLatch.await(waitTime, TimeUnit.MILLISECONDS);
-			}
-
-		} catch (InterruptedException e) {
-			LOG.warn("Interrupted while waiting for startup");
-		}
-		return false;
+	public void waitForStartUp() throws InterruptedException {
+			startUpLatch.await();
 	}
 
 	public String getServiceName(){
@@ -172,5 +164,11 @@ public class GenericService {
 	public void setServiceName(String serviceName) {
 		this.serviceName = serviceName;
 		GenericServiceInfo.setServiceName(serviceName);
+	}
+
+	public void setDefaultUncaughtExceptionHandler(
+			UncaughtExceptionHandler defaultUncaughtExceptionHandler) {
+		this.defaultUncaughtExceptionHandler = defaultUncaughtExceptionHandler;
+		
 	}
 }
