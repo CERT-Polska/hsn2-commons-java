@@ -27,6 +27,7 @@ import org.apache.commons.daemon.DaemonController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pl.nask.hsn2.task.TaskContextFactory;
 import pl.nask.hsn2.task.TaskFactory;
 
 public abstract class ServiceMain implements Daemon {
@@ -55,7 +56,13 @@ public abstract class ServiceMain implements Daemon {
 	}
 
 	private void createService() {
-		service = new GenericService(createTaskFactory(), cmd.getMaxThreads(),	cmd.getRbtCommonExchangeName(), cmd.getRbtNotifyExchangeName());
+		TaskContextFactory contextFactory = createTaskContextFactory();
+		if(contextFactory != null){
+			service = new GenericService(createTaskFactory(), contextFactory, cmd.getMaxThreads(),	cmd.getRbtCommonExchangeName(), cmd.getRbtNotifyExchangeName());
+		}
+		else {
+			service = new GenericService(createTaskFactory(), cmd.getMaxThreads(),	cmd.getRbtCommonExchangeName(), cmd.getRbtNotifyExchangeName());
+		}
 		service.setDefaultUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler());
 	}
 	
@@ -79,7 +86,19 @@ public abstract class ServiceMain implements Daemon {
 		serviceRunner.interrupt();
 	}
 	
-	public class DefaultUncaughtExceptionHandler implements UncaughtExceptionHandler{
+	protected CommandLineParams getCommandLineParams() {
+		return cmd;
+	}
+	
+	protected CommandLineParams newCommandLineParams() {
+		return new CommandLineParams();
+	}
+	
+	protected TaskContextFactory createTaskContextFactory() {
+		return null;
+	}
+	
+	protected class DefaultUncaughtExceptionHandler implements UncaughtExceptionHandler{
 
 		@Override
 		public void uncaughtException(Thread t, Throwable e) {
@@ -92,12 +111,17 @@ public abstract class ServiceMain implements Daemon {
 			}
 		}
 	}
-
-	protected CommandLineParams getCommandLineParams() {
-		return cmd;
-	}
 	
-	protected CommandLineParams newCommandLineParams() {
-		return new CommandLineParams();
+	protected static class DefaultDaemonContext implements DaemonContext {
+		private String[] args;
+		public DefaultDaemonContext(String[] args) {
+			this.args = args;
+		}
+		public DaemonController getController() {
+			return null;
+		}
+		public String[] getArguments() {
+			return args;
+		}
 	}
 }
