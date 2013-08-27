@@ -124,4 +124,8 @@ public abstract class ServiceMain implements Daemon {
 			return args;
 		}
 	}
+
+	public Thread getServiceRunner() {
+		return serviceRunner;
+	}
 }
