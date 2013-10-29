@@ -53,7 +53,7 @@ public class GenericService implements Runnable{
 
     List<TaskProcessor> taskProcessors;
 
-    private final TaskFactory jobFactory;
+    private final Class<? extends TaskFactory> jobFactoryClass;
 
     private TaskContextFactory contextFactory;
 
@@ -61,12 +61,12 @@ public class GenericService implements Runnable{
 
 	private Thread finishedJobsListenerThread;
 
-    public GenericService(TaskFactory jobFactory, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
-        this(jobFactory, null, maxThreads, rbtCommonExchangeName, rbtNotifyExchangeName);
+    public GenericService(Class<? extends TaskFactory> jobFactoryClass, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
+        this(jobFactoryClass, null, maxThreads, rbtCommonExchangeName, rbtNotifyExchangeName);
     }
 
-    public GenericService(TaskFactory jobFactory, TaskContextFactory contextFactory, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
-        this.jobFactory = jobFactory;
+    public GenericService(Class<? extends TaskFactory> jobFactoryClass, TaskContextFactory contextFactory, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
+        this.jobFactoryClass = jobFactoryClass;
         this.contextFactory = contextFactory;
         if (maxThreads != null && maxThreads > 0) {
             this.maxThreads = maxThreads;
@@ -114,10 +114,15 @@ public class GenericService implements Runnable{
 
     private TaskProcessor prepareTaskProcessor() {
         ServiceConnector connector = new ServiceConnectorImpl(connectorAddress, serviceQueueName, commonExchangeName, objectStoreQueueName, dataStoreAddress);
-        if (contextFactory == null) {
-            return new TaskProcessor(jobFactory, connector, finishedJobsListener);
-        } else {
-            return new TaskProcessor(jobFactory, connector, contextFactory, finishedJobsListener);
+        try{
+	        if (contextFactory == null) {
+	            return new TaskProcessor(jobFactoryClass.newInstance(), connector, finishedJobsListener);
+	        } else {
+	            return new TaskProcessor(jobFactoryClass.newInstance(), connector, contextFactory, finishedJobsListener);
+	        }
+        }
+        catch(IllegalAccessException | InstantiationException e){
+        	throw new RuntimeException("Error in service implementation!", e);
         }
     }
 

@@ -44,26 +44,6 @@ public class GenericServiceTest {
 	@SuppressWarnings("unchecked")
 	@Test()
 	public void testShutDown() throws Exception {
-		final AtomicLong counter = new AtomicLong(0);
-		
-		TaskFactory jobFactory = new TaskFactory() {
-			@Override
-			public Task newTask(TaskContext jobContext, ParametersWrapper parameters,
-					ObjectDataWrapper data) throws ParameterException {
-				return new Task() {
-					@Override
-					public boolean takesMuchTime() {
-						return false;
-					}
-					
-					@Override
-					public void process() throws ParameterException, ResourceException,
-							StorageException {
-						counter.incrementAndGet();
-					}
-				};
-			}
-		};			
 
 		new NonStrictExpectations() {
 			{
@@ -74,23 +54,48 @@ public class GenericServiceTest {
 				result = ObjectResponse.newBuilder().setType(ResponseType.SUCCESS_GET).addData(ObjectData.newBuilder().setId(1)).build();
 			}
 		};
-		GenericService gs = new GenericService(jobFactory , 3, "", "");
+		GenericService gs = new GenericService(TestTaskFactory.class , 3, "", "");
 		
-		Assert.assertEquals(counter.get(), 0);
+		Assert.assertEquals(TestTaskFactory.getCounter().get(), 0);
 		
 		Thread gsThread = new Thread(gs);
 		gsThread.start(); 
 		
 		Thread.sleep(1000);
 		
-		Assert.assertTrue(counter.get() > 0, "Some tasks were processed");
+		Assert.assertTrue(TestTaskFactory.getCounter().get() > 0, "Some tasks were processed");
 		gs.stop();		
 		// Give some time to stop processing
 		Thread.sleep(10);
 		// check if delta is 0
-		long c1 = counter.get();
+		long c1 = TestTaskFactory.getCounter().get();
 		Thread.sleep(10);
-		long c2 = counter.get();
+		long c2 = TestTaskFactory.getCounter().get();
 		Assert.assertEquals(c1-c2, 0, "Tasks processed after stop()");
+	}
+	
+}
+
+class TestTaskFactory implements TaskFactory{
+	private static AtomicLong counter = new AtomicLong(0);
+
+	@Override
+	public Task newTask(TaskContext jobContext, ParametersWrapper parameters,
+			ObjectDataWrapper data) throws ParameterException {
+		return new Task() {
+			@Override
+			public boolean takesMuchTime() {
+				return false;
+			}
+			
+			@Override
+			public void process() throws ParameterException, ResourceException,
+					StorageException {
+				counter.incrementAndGet();
+			}
+		};
+	}
+	public static AtomicLong getCounter(){
+		return counter;
 	}
 }

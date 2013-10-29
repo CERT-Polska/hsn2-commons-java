@@ -38,7 +38,7 @@ public abstract class ServiceMain implements Daemon {
 	private Thread serviceRunner;
 		
 	protected abstract void prepareService();
-	protected abstract TaskFactory createTaskFactory();
+	protected abstract Class<? extends TaskFactory> initializeTaskFactory();
 	
 	@Override
 	public void destroy() {
@@ -58,10 +58,10 @@ public abstract class ServiceMain implements Daemon {
 	private void createService() {
 		TaskContextFactory contextFactory = createTaskContextFactory();
 		if(contextFactory != null){
-			service = new GenericService(createTaskFactory(), contextFactory, cmd.getMaxThreads(),	cmd.getRbtCommonExchangeName(), cmd.getRbtNotifyExchangeName());
+			service = new GenericService(initializeTaskFactory(), contextFactory, cmd.getMaxThreads(),	cmd.getRbtCommonExchangeName(), cmd.getRbtNotifyExchangeName());
 		}
 		else {
-			service = new GenericService(createTaskFactory(), cmd.getMaxThreads(),	cmd.getRbtCommonExchangeName(), cmd.getRbtNotifyExchangeName());
+			service = new GenericService(initializeTaskFactory(), cmd.getMaxThreads(),	cmd.getRbtCommonExchangeName(), cmd.getRbtNotifyExchangeName());
 		}
 		service.setDefaultUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler());
 	}
