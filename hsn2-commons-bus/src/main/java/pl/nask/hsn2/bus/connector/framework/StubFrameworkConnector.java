@@ -119,4 +119,11 @@ public class StubFrameworkConnector implements FrameworkConnector {
 		
 	}
 
+	@Override
+	public boolean sendJobCancelRequest(long jobId)
+			throws FrameworkConnectorException {
+		// TODO Auto-generated method stub
+		throw new IllegalStateException("Not implemented!.");
+	}
+
 }

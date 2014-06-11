@@ -181,4 +181,5 @@ public interface FrameworkConnector extends AbstractServicesConnector{
 	 */
 	boolean sendSetConfig(Properties properties)
 			throws FrameworkConnectorException;
+	boolean sendJobCancelRequest(long jobId) throws FrameworkConnectorException;
 }

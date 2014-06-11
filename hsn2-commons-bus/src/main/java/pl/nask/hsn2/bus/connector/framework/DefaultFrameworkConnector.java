@@ -38,6 +38,8 @@ import pl.nask.hsn2.bus.operations.InfoData;
 import pl.nask.hsn2.bus.operations.InfoRequest;
 import pl.nask.hsn2.bus.operations.InfoType;
 import pl.nask.hsn2.bus.operations.JobAccepted;
+import pl.nask.hsn2.bus.operations.JobCancelReply;
+import pl.nask.hsn2.bus.operations.JobCancelRequest;
 import pl.nask.hsn2.bus.operations.JobDescriptor;
 import pl.nask.hsn2.bus.operations.JobInfo;
 import pl.nask.hsn2.bus.operations.JobListReply;
@@ -55,6 +57,7 @@ import pl.nask.hsn2.bus.operations.WorkflowUploadReply;
 import pl.nask.hsn2.bus.operations.WorkflowUploadRequest;
 import pl.nask.hsn2.bus.operations.builder.GetConfigRequestBuilder;
 import pl.nask.hsn2.bus.operations.builder.InfoRequestBuilder;
+import pl.nask.hsn2.bus.operations.builder.JobCancelRequestBuilder;
 import pl.nask.hsn2.bus.operations.builder.JobDescriptorBuilder;
 import pl.nask.hsn2.bus.operations.builder.JobListRequestBuilder;
 import pl.nask.hsn2.bus.operations.builder.PingBuilder;
@@ -256,8 +259,16 @@ public class DefaultFrameworkConnector extends AbstractSerializableConnector imp
 		} catch (BusException e) {
 			LOGGER.warn("Closing failed.",e);
 		}
-		
-		
 	}
-
+	
+	@Override
+	public final boolean sendJobCancelRequest(long jobId) throws FrameworkConnectorException {
+		JobCancelRequest jobCancelRequest = new JobCancelRequestBuilder(jobId).build();
+		Operation response = sendToFramework(jobCancelRequest);
+		if (response instanceof JobCancelReply){
+			return ((JobCancelReply)response).isCancelled();
+		}
+		throw new FrameworkConnectorException("Unexpected response: " + response.getClass().getName());
+	}
+	
 }
