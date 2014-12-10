@@ -121,16 +121,22 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
 				job.process();
 				LOG.debug("Task completed (jobId={}, reqId={})", jobId, reqId);
 
-				context.flush();
-				List<Long> newObjects = context.getAddedObjects();
-				LOG.debug("Sending TaskComplete (jobId={}, reqId={})", jobId, reqId);
-				if (context.hasWarnings()) {
-					connector.sendTaskCompletedWithWarnings(jobId, reqId, newObjects, context.getWarnings());
-				} else {
-					connector.sendTaskComplete(jobId, reqId, newObjects);
+				if (finishedJobsListener != null && finishedJobsListener.isJobFinished(jobId)) {
+					connector.ignoreLastTaskRequest();
+					LOG.warn("Got job finished notification. Task cancelled after processed. (jobId={}, requestId={})", jobId, reqId);
 				}
-				LOG.info("TaskComplete sent (jobId={}, reqId={}, newObjects.count={})", new Object[] { jobId, reqId, newObjects.size() });
-				LOG.debug("Task processing time: {} sec.", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - taskStartMilis));				
+				else{
+					context.flush();
+					List<Long> newObjects = context.getAddedObjects();
+					LOG.debug("Sending TaskComplete (jobId={}, reqId={})", jobId, reqId);
+					if (context.hasWarnings()) {
+						connector.sendTaskCompletedWithWarnings(jobId, reqId, newObjects, context.getWarnings());
+					} else {
+						connector.sendTaskComplete(jobId, reqId, newObjects);
+					}
+					LOG.info("TaskComplete sent (jobId={}, reqId={}, newObjects.count={})", new Object[] { jobId, reqId, newObjects.size() });
+					LOG.debug("Task processing time: {} sec.", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - taskStartMilis));
+				}
 			}
 
 		} catch (RequiredParameterMissingException e) {
