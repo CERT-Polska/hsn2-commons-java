@@ -92,6 +92,9 @@
 				<plugin>
 					<artifactId>maven-javadoc-plugin</artifactId>
 					<version>${plugin.version.javadoc}</version>
+					<configuration>
+						<failOnError>false</failOnError>
+					</configuration>
 				</plugin>
 				<plugin>
 						<artifactId>maven-jar-plugin</artifactId>

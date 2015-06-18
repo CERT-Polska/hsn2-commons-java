@@ -127,6 +127,10 @@ final public class URLNormalizerUtils {
         }
         host = host.toLowerCase();
         
+        while (host.endsWith(".")) {
+        	host = host.substring(0, host.length()-1);
+        }
+        
         str.replace(startIndx, endIndx, host);
         return host;
     }
