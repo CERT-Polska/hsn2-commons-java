@@ -12,6 +12,8 @@ import java.util.Set;
 import mockit.Delegate;
 import mockit.NonStrictExpectations;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -42,6 +44,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * ServiceConnectorImpl test class.
  */
 public class ServiceConnectorImplTest {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ServiceConnectorImplTest.class);
+	
 	private static final String SERVICE_NAME = "serviceName";
 	private static final long JOB_ID = 176253L;
 	private static final int TASK_ID = 84201;
