@@ -15,7 +15,9 @@ import mockit.NonStrictExpectations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import pl.nask.hsn2.bus.operations.AttributeType;
@@ -44,8 +46,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * ServiceConnectorImpl test class.
  */
 public class ServiceConnectorImplTest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ServiceConnectorImplTest.class);
-	
 	private static final String SERVICE_NAME = "serviceName";
 	private static final long JOB_ID = 176253L;
 	private static final int TASK_ID = 84201;
@@ -65,6 +65,20 @@ public class ServiceConnectorImplTest {
 
 	private Set<ActionType> actions = new HashSet<>();
 	private Set<String> results = new HashSet<>();
+	
+	/*
+	 * workaround for issues with class initialization when using cobertura - see 
+	 * http://stackoverflow.com/questions/23761091/log4j-logger-getloggerclass-throws-npe-when-running-with-jmockit-and-cobertura
+	 * for more details.
+	 */
+	@BeforeTest
+	public void loadServiceConnedtorImpl() {
+		try {
+			ServiceConnectorImpl connector = new ServiceConnectorImpl(null, null, null, null, null);
+		} catch (Exception e) {
+			//eat it
+		}
+	}
 
 	/**
 	 * Mocks InConnector, ObjectStoreConnectorImpl and DataStoreConnectorImpl.
