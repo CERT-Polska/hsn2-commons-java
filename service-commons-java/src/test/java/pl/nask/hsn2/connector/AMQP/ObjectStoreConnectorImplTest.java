@@ -17,6 +17,7 @@ import mockit.Mocked;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import pl.nask.hsn2.StorageException;
@@ -55,6 +56,19 @@ public class ObjectStoreConnectorImplTest {
 	public void beforeMethod() throws IOException, InterruptedException {
 		actions.clear();
 		result = "";
+	}
+
+	/*
+	 * Workaround to assure that ObjectStoreConnectorImpl class was already initialized before test starts.
+	 * Based on http://stackoverflow.com/a/23788935.
+	 */
+	@BeforeTest
+	private void loadObjectStoreConnectorImpl() {
+		try {
+			new ObjectStoreConnectorImpl(null, null);
+		} catch (Exception e) {
+			// just ignore it
+		}
 	}
 
 	@Test(dependsOnGroups = "InConnectorTest")

@@ -31,7 +31,12 @@ public class GenericServiceInfoTest {
 	@Test
 	public void getServicePath() throws Exception {
 		String classPathSuffix = "service-commons-java" + System.getProperty("file.separator") + "target";
-		Assert.assertTrue(GenericServiceInfo.getServicePath(GenericServiceInfo.class).endsWith(classPathSuffix));
 
+		// workaround to handle Cobertura target directory
+		if (GenericServiceInfo.getServicePath(GenericServiceInfo.class).endsWith("/generated-classes")) {
+			classPathSuffix = classPathSuffix.concat("/generated-classes");
+		}
+
+		Assert.assertTrue(GenericServiceInfo.getServicePath(GenericServiceInfo.class).endsWith(classPathSuffix));
 	}
 }
