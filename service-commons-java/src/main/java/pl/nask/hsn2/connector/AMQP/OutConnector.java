@@ -1,8 +1,8 @@
 /*
  * Copyright (c) NASK, NCSC
- * 
+ *
  * This file is part of HoneySpider Network 2.0.
- * 
+ *
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -30,6 +30,7 @@ import pl.nask.hsn2.connector.BusException;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.ShutdownSignalException;
 
 public class OutConnector extends AbstractConnector {
 
@@ -41,7 +42,7 @@ public class OutConnector extends AbstractConnector {
 		super(connectorAddress,publisherQueueName);
 		try {
 			objectStoreReplyQueueName = channel.queueDeclare().getQueue();
-		} catch (IOException e) {
+		} catch (ShutdownSignalException | IOException e) {
 			throw new BusException("Can't create reply queue for ObjectStore.", e);
 		}
 		setConsumer(objectStoreReplyQueueName,true);
@@ -63,7 +64,7 @@ public class OutConnector extends AbstractConnector {
 		try {
 			channel.basicPublish("", publisherQueueName, properties, msg);
 			LOGGER.debug("Message sent to {}, type: {}, corrId: {}", new Object[]{publisherQueueName,msgTypeName,corrId});
-		} catch (IOException e) {
+		} catch (ShutdownSignalException | IOException e) {
 			throw new BusException("Can't send message.", e);
 		}
 	}
@@ -77,10 +78,10 @@ public class OutConnector extends AbstractConnector {
 		while(true){
 			try {
 				delivery = consumer.nextDelivery();
-			} catch (InterruptedException e) {
+			} catch (ShutdownSignalException | InterruptedException e) {
 				throw new BusException("Can't receive message.", e);
 			}
-			
+
 			try {
 				return checkDeliveredMessage(delivery);
 			} catch (ResourceException e) {
@@ -92,7 +93,7 @@ public class OutConnector extends AbstractConnector {
 	private byte[] checkDeliveredMessage(QueueingConsumer.Delivery delivery) throws ResourceException  {
 		String contextType = delivery.getProperties().getContentType();
 		if(!DEFAULT_MESSAGE_CONTENT_TYPE.equals(contextType)){
-			throw new IllegalArgumentException("Unknow context: " + contextType);
+			throw new IllegalArgumentException("Unknown context: " + contextType);
 		}
 		if(corrId.equals(delivery.getProperties().getCorrelationId()) ){
 			corrId = null;
@@ -110,9 +111,8 @@ public class OutConnector extends AbstractConnector {
 	protected void closeChannel() {
 		try {
 			channel.close();
-		}
-		catch (IOException e) {
-			LOGGER.error("Can not close channel!", e);
+		} catch (IOException e) {
+			LOGGER.error("Can't close channel!", e);
 		}
 	}
 }
