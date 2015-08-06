@@ -83,7 +83,7 @@ public class ObjectStoreConnectorImplTest {
 		dataList.add(ObjectData.newBuilder().addAttrs(a1).build());
 
 		actions.add(ActionType.RECEIVE_OBJECT_RESPONSE);
-		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME);
+		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME, 0);
 		ObjectResponse response = os.sendObjectStoreData(jobId, requestId, dataList);
 
 		Assert.assertEquals(result, QUEUE_NAME
@@ -103,7 +103,7 @@ public class ObjectStoreConnectorImplTest {
 		dataList.add(ObjectData.newBuilder().addAttrs(a1).build());
 
 		actions.add(ActionType.RECEIVE_OBJECT_RESPONSE);
-		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME);
+		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME, 0);
 		ObjectResponse response = os.updateObjectStoreData(jobId, dataList);
 
 		Assert.assertEquals(result, QUEUE_NAME + "ObjectRequest[8, 2, 16, 123, 34, 11, 10, 9, 10, 2, 97, 49, 16, 2, 32, -41, 8]");
@@ -122,7 +122,7 @@ public class ObjectStoreConnectorImplTest {
 		objectsId.add(2L);
 
 		actions.add(ActionType.RECEIVE_OBJECT_RESPONSE);
-		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME);
+		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME, 0);
 		ObjectResponse response = os.getObjectStoreData(jobId, objectsId);
 
 		Assert.assertEquals(result, QUEUE_NAME + "ObjectRequest[8, 0, 16, 123, 26, 2, 1, 2]");
@@ -141,7 +141,7 @@ public class ObjectStoreConnectorImplTest {
 		queryStructures.add(qs);
 
 		actions.add(ActionType.RECEIVE_OBJECT_RESPONSE);
-		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME);
+		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME, 0);
 		ObjectResponse response = os.query(jobId, queryStructures);
 
 		Assert.assertEquals(result, QUEUE_NAME + "ObjectRequest[8, 3, 16, 123, 58, 8, 8, 1, 18, 4, 110, 97, 109, 101]");
@@ -159,7 +159,7 @@ public class ObjectStoreConnectorImplTest {
 		List<QueryStructure> queryStructures = new ArrayList<>();
 		queryStructures.add(qs);
 
-		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME);
+		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME, 0);
 		os.query(jobId, queryStructures);
 	}
 
@@ -175,7 +175,7 @@ public class ObjectStoreConnectorImplTest {
 
 		actions.add(ActionType.RECEIVE_OBJECT_RESPONSE);
 		actions.add(ActionType.PUBLISH_THROW_IO_EXCEPTION);
-		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME);
+		ObjectStoreConnectorImpl os = new ObjectStoreConnectorImpl("", QUEUE_NAME, 0);
 		os.query(jobId, queryStructures);
 	}
 }
