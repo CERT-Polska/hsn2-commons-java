@@ -30,7 +30,6 @@ import pl.nask.hsn2.connector.BusException;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.ShutdownSignalException;
 
 public class OutConnector extends AbstractConnector {
 
@@ -42,7 +41,7 @@ public class OutConnector extends AbstractConnector {
 		super(connectorAddress,publisherQueueName);
 		try {
 			objectStoreReplyQueueName = channel.queueDeclare().getQueue();
-		} catch (ShutdownSignalException | IOException e) {
+		} catch (IOException e) {
 			throw new BusException("Can't create reply queue for ObjectStore.", e);
 		}
 		setConsumer(objectStoreReplyQueueName,true);
@@ -64,7 +63,7 @@ public class OutConnector extends AbstractConnector {
 		try {
 			channel.basicPublish("", publisherQueueName, properties, msg);
 			LOGGER.debug("Message sent to {}, type: {}, corrId: {}", new Object[]{publisherQueueName,msgTypeName,corrId});
-		} catch (ShutdownSignalException | IOException e) {
+		} catch (IOException e) {
 			throw new BusException("Can't send message.", e);
 		}
 	}
@@ -78,7 +77,7 @@ public class OutConnector extends AbstractConnector {
 		while(true){
 			try {
 				delivery = consumer.nextDelivery();
-			} catch (ShutdownSignalException | InterruptedException e) {
+			} catch (InterruptedException e) {
 				throw new BusException("Can't receive message.", e);
 			}
 
