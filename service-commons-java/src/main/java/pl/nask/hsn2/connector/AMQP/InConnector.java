@@ -30,7 +30,6 @@ import pl.nask.hsn2.connector.BusException;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.ShutdownSignalException;
 
 public class InConnector extends AbstractConnector {
 
@@ -56,7 +55,7 @@ public class InConnector extends AbstractConnector {
 		try {
 			channel.basicPublish(destination.getExchange(), destination.getService(), properties, msg);
 			LOGGER.debug("sent to {}: {}", destination, msg);
-		} catch (ShutdownSignalException | IOException e) {
+		} catch (IOException e) {
 			LOGGER.error("Message was not sent!", e);
 		}
 	}
@@ -69,7 +68,7 @@ public class InConnector extends AbstractConnector {
 			channel.basicPublish(destination.getExchange(), destination.getService(), properties, msg);
 			channel.basicAck(deliveryTag, false);
 			LOGGER.debug("sent to {}: {}", destination, msg);
-		} catch (ShutdownSignalException | IOException e) {
+		} catch (IOException e) {
 			LOGGER.error("Message was not sent!", e);
 		}
 	}
@@ -77,7 +76,7 @@ public class InConnector extends AbstractConnector {
 	public void ackLastMessage() {
 		try {
 			channel.basicAck(deliveryTag, false);
-		} catch (ShutdownSignalException | IOException e) {
+		} catch (IOException e) {
 			LOGGER.error("Last message was not acked!", e);
 		}
 	}
@@ -87,7 +86,7 @@ public class InConnector extends AbstractConnector {
 	    QueueingConsumer.Delivery delivery;
 		try {
 			delivery = consumer.nextDelivery();
-		} catch (ShutdownSignalException | InterruptedException e) {
+		} catch (InterruptedException e) {
 			throw new BusException("Can't receive message.", e);
 		}
 
@@ -98,7 +97,7 @@ public class InConnector extends AbstractConnector {
 		if (!DEFAULT_MESSAGE_CONTENT_TYPE.equals(contentType)){
 			try {
 				channel.basicAck(deliveryTag, false);
-			} catch (ShutdownSignalException | IOException e) {
+			} catch (IOException e) {
 				LOGGER.error("Can't send ack.", e);
 			}
 			throw new IllegalArgumentException("Unknown context: " + contentType);
