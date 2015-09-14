@@ -82,6 +82,8 @@ public abstract class FinishedJobsListenerAbstract implements Runnable {
 			}
 		} catch (IOException e) {
 			LOG.error("Error while communicating with message broker.", e);
+		} catch (Exception e) {
+			LOG.error("Unexpected error during JobFinished message processing.", e);
 		}
 		LOG.info("Finished jobs listener terminated.");
 	}
