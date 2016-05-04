@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,16 +19,17 @@
 
 package pl.nask.hsn2;
 
-
 public class StorageException extends Exception {
-
+	/**
+	 * Serial id.
+	 */
 	private static final long serialVersionUID = 5513036533474530664L;
 
 	public StorageException(String msg, Throwable e) {
-        super(msg, e);
-    }
+		super(msg, e);
+	}
 
-    public StorageException(String msg) {
-        super(msg);
-    }
+	public StorageException(String msg) {
+		super(msg);
+	}
 }

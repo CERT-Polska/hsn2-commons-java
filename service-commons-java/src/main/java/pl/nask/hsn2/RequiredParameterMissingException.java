@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,15 +20,21 @@
 package pl.nask.hsn2;
 
 public class RequiredParameterMissingException extends ParameterException {
-    private static final long serialVersionUID = -2187948375051589155L;
-    private String paramName;
+	/**
+	 * Serial id.
+	 */
+	private static final long serialVersionUID = -2187948375051589155L;
+	/**
+	 * Parameter name.
+	 */
+	private String paramName;
 
-    public RequiredParameterMissingException(String paramName) {
-        super (String.format("No parameter with name=%s found", paramName));
-        this.paramName = paramName;
-    }
+	public RequiredParameterMissingException(String paramName) {
+		super(String.format("No parameter with name=%s found", paramName));
+		this.paramName = paramName;
+	}
 
-    public String getParamName() {
-        return paramName;
-    }
+	public String getParamName() {
+		return paramName;
+	}
 }

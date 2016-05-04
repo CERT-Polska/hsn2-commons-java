@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import pl.nask.hsn2.bus.connector.AbstractServicesConnector;
 import pl.nask.hsn2.bus.operations.JobInfo;
 import pl.nask.hsn2.bus.operations.ObjectData;
 import pl.nask.hsn2.bus.operations.WorkflowBasicInfo;
@@ -32,7 +33,7 @@ import pl.nask.hsn2.bus.operations.WorkflowBasicInfo;
  *  
  *
  */
-public interface FrameworkConnector {
+public interface FrameworkConnector extends AbstractServicesConnector{
 
 	/**
 	 * Sends JobDescriptor operation to the framework.
@@ -180,4 +181,5 @@ public interface FrameworkConnector {
 	 */
 	boolean sendSetConfig(Properties properties)
 			throws FrameworkConnectorException;
+	boolean sendJobCancelRequest(long jobId) throws FrameworkConnectorException;
 }

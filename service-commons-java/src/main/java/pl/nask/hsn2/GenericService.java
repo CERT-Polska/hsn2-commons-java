@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,10 @@
 
 package pl.nask.hsn2;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -32,74 +34,95 @@ import pl.nask.hsn2.task.TaskContextFactory;
 import pl.nask.hsn2.task.TaskFactory;
 
 
-public class GenericService {
-    private static final Logger LOG = LoggerFactory.getLogger(GenericService.class);
+public class GenericService implements Runnable{
+    private static final Logger LOGGER = LoggerFactory.getLogger(GenericService.class);
 
     private String connectorAddress = null;
 	private String objectStoreQueueName = null;
 	private String dataStoreAddress = null;
 	private String serviceQueueName = null;
     private String serviceName = null;
-    private String commonExchangeName;
+    private final String commonExchangeName;
+    private final String notifyExchangeName;
 
     private ExecutorService executor;
-    private int maxThreads;
+    private int maxThreads = 1;
+    private final CountDownLatch startUpLatch = new CountDownLatch(1);
+    
+    private FinishedJobsListener finishedJobsListener;
 
     List<TaskProcessor> taskProcessors;
 
-    private final TaskFactory jobFactory;
+    private final Class<? extends TaskFactory> jobFactoryClass;
 
     private TaskContextFactory contextFactory;
 
-    public GenericService(TaskFactory jobFactory, Integer maxThreads, String rbtCommonExchangeName) {
-        this(jobFactory, null, maxThreads, rbtCommonExchangeName);
+	private UncaughtExceptionHandler defaultUncaughtExceptionHandler;
+
+	private Thread finishedJobsListenerThread;
+
+    public GenericService(Class<? extends TaskFactory> jobFactoryClass, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
+        this(jobFactoryClass, null, maxThreads, rbtCommonExchangeName, rbtNotifyExchangeName);
     }
 
-    public GenericService(TaskFactory jobFactory, TaskContextFactory contextFactory, Integer maxThreads, String rbtCommonExchangeName) {
-        this.jobFactory = jobFactory;
+    public GenericService(Class<? extends TaskFactory> jobFactoryClass, TaskContextFactory contextFactory, Integer maxThreads, String rbtCommonExchangeName, String rbtNotifyExchangeName) {
+        this.jobFactoryClass = jobFactoryClass;
         this.contextFactory = contextFactory;
-        if (maxThreads == null || maxThreads == 0) {
-            this.maxThreads = 1;
-        } else {
+        if (maxThreads != null && maxThreads > 0) {
             this.maxThreads = maxThreads;
         }
         executor = Executors.newFixedThreadPool(this.maxThreads);
-        taskProcessors = new ArrayList<TaskProcessor>(this.maxThreads);
+        taskProcessors = new ArrayList<>(this.maxThreads);
         this.commonExchangeName = rbtCommonExchangeName;
+        this.notifyExchangeName = rbtNotifyExchangeName;
+        this.finishedJobsListener = new FinishedJobsListener();
     }
 
-	public void run() throws InterruptedException {
-	    List<Future<Void>> results = start();
-        for (Future<Void> res: results) {
-            LOG.info("TaskProcessor {} started.", res);
-        }
+	public void run() {
+		Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler);
+	    startTaskProcessors();
+        startFinishedJobsListener();
+        startUpLatch.countDown();
     }
-	
-	List<Future<Void>> start() throws InterruptedException {
-		List<Future<Void>> results = new ArrayList<Future<Void>>(maxThreads);
-		for (int i=0; i<maxThreads; i++) {
+
+	List<Future<Void>> startTaskProcessors() {
+		List<Future<Void>> results = new ArrayList<>(maxThreads);
+		for (int i = 0; i < maxThreads; i++) {
 	        TaskProcessor processor = prepareTaskProcessor();
             taskProcessors.add(processor);
-            results.add(executor.submit(processor));
+            Future<Void> result = executor.submit(processor);
+            results.add(result);
+            LOGGER.info("TaskProcessor {} started.", result);
         }
-
 	    return results;
 	}
 	
+	private void startFinishedJobsListener(){
+		finishedJobsListener.initialize(connectorAddress, notifyExchangeName);
+		finishedJobsListenerThread = new Thread(finishedJobsListener, "finishedJobsListener");
+		finishedJobsListenerThread.start();
+	}
+	
 	public void stop() {
-		LOG.info("Shutting down");
+		LOGGER.info("Shutting down");
 		for (TaskProcessor p: taskProcessors) {
 			p.setCanceled();
 		}
-		executor.shutdownNow();		
+		executor.shutdownNow();
+		finishedJobsListener.shutdown();
 	}
 
     private TaskProcessor prepareTaskProcessor() {
         ServiceConnector connector = new ServiceConnectorImpl(connectorAddress, serviceQueueName, commonExchangeName, objectStoreQueueName, dataStoreAddress);
-        if (contextFactory == null) {
-            return new TaskProcessor(jobFactory, connector);
-        } else {
-            return new TaskProcessor(jobFactory, connector, contextFactory);
+        try{
+	        if (contextFactory == null) {
+	            return new TaskProcessor(jobFactoryClass.newInstance(), connector, finishedJobsListener);
+	        } else {
+	            return new TaskProcessor(jobFactoryClass.newInstance(), connector, contextFactory, finishedJobsListener);
+	        }
+        }
+        catch(IllegalAccessException | InstantiationException e){
+        	throw new RuntimeException("Error in service implementation!", e);
         }
     }
 
@@ -134,6 +157,10 @@ public class GenericService {
 	public void setServiceQueueName(String serviceQueueName) {
 		this.serviceQueueName = serviceQueueName;
 	}
+	
+	public void waitForStartUp() throws InterruptedException {
+			startUpLatch.await();
+	}
 
 	public String getServiceName(){
 		return serviceName;
@@ -142,5 +169,11 @@ public class GenericService {
 	public void setServiceName(String serviceName) {
 		this.serviceName = serviceName;
 		GenericServiceInfo.setServiceName(serviceName);
+	}
+
+	public void setDefaultUncaughtExceptionHandler(
+			UncaughtExceptionHandler defaultUncaughtExceptionHandler) {
+		this.defaultUncaughtExceptionHandler = defaultUncaughtExceptionHandler;
+		
 	}
 }

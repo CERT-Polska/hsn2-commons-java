@@ -1,8 +1,8 @@
 /*
  * Copyright (c) NASK, NCSC
- * 
- * This file is part of HoneySpider Network 2.0.
- * 
+ *
+ * This file is part of HoneySpider Network 2.1.
+ *
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -30,18 +30,19 @@ import pl.nask.hsn2.connector.BusException;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.ShutdownSignalException;
 
 public class InConnector extends AbstractConnector {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(InConnector.class);
 
 	private long deliveryTag;
-	RbtDestination destination;
+	private final RbtDestination destination;
 
 	public InConnector(String connectorAddress, RbtDestination destination)  throws BusException {
 		super(connectorAddress, null, destination.getService());
 		this.destination = destination;
+
+		LOGGER.info(InConnector.class.getName() + " created. ConnectorAddress={}, Destination={} " + this, connectorAddress, destination);
 	}
 
 	@Override
@@ -53,7 +54,7 @@ public class InConnector extends AbstractConnector {
 
 		try {
 			channel.basicPublish(destination.getExchange(), destination.getService(), properties, msg);
-			LOGGER.debug("send to {}: {}", destination, msg);
+			LOGGER.debug("sent to {}: {}", destination, msg);
 		} catch (IOException e) {
 			LOGGER.error("Message was not sent!", e);
 		}
@@ -66,9 +67,17 @@ public class InConnector extends AbstractConnector {
 		try {
 			channel.basicPublish(destination.getExchange(), destination.getService(), properties, msg);
 			channel.basicAck(deliveryTag, false);
-			LOGGER.debug("send to {}: {}", destination, msg);
+			LOGGER.debug("sent to {}: {}", destination, msg);
 		} catch (IOException e) {
 			LOGGER.error("Message was not sent!", e);
+		}
+	}
+
+	public void ackLastMessage() {
+		try {
+			channel.basicAck(deliveryTag, false);
+		} catch (IOException e) {
+			LOGGER.error("Last message was not acked!", e);
 		}
 	}
 
@@ -77,8 +86,6 @@ public class InConnector extends AbstractConnector {
 	    QueueingConsumer.Delivery delivery;
 		try {
 			delivery = consumer.nextDelivery();
-		} catch (ShutdownSignalException e) {
-			throw new BusException("Broker has been closed.", e);
 		} catch (InterruptedException e) {
 			throw new BusException("Can't receive message.", e);
 		}
@@ -91,9 +98,9 @@ public class InConnector extends AbstractConnector {
 			try {
 				channel.basicAck(deliveryTag, false);
 			} catch (IOException e) {
-				LOGGER.error("Can't send ack.");
+				LOGGER.error("Can't send ack.", e);
 			}
-			throw new IllegalArgumentException("Unknow context: " + contentType);
+			throw new IllegalArgumentException("Unknown context: " + contentType);
 		}
 
 		LOGGER.debug("receives: {}", delivery);
@@ -104,9 +111,8 @@ public class InConnector extends AbstractConnector {
 	public void closeChannel() {
 		try {
 			channel.close();
-		}
-		catch (IOException e) {
-			LOGGER.error("Can not close channel!", e);
+		} catch (IOException e) {
+			LOGGER.error("Can't close channel!", e);
 		}
 	}
 }

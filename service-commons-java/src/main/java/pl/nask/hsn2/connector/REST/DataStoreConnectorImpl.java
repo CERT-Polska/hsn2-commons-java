@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,10 @@
 
 package pl.nask.hsn2.connector.REST;
 
+import static org.apache.commons.httpclient.HttpStatus.SC_CREATED;
+import static org.apache.commons.httpclient.HttpStatus.SC_OK;
+
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,51 +35,30 @@ import org.slf4j.LoggerFactory;
 
 import pl.nask.hsn2.ResourceException;
 import pl.nask.hsn2.StorageException;
-import pl.nask.hsn2.protobuff.DataStore.DataResponse;
-import pl.nask.hsn2.protobuff.DataStore.DataResponse.ResponseType;
-import pl.nask.hsn2.protobuff.Object.Reference;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessage;
-
-import static org.apache.commons.httpclient.HttpStatus.*;
 
 public class DataStoreConnectorImpl implements DataStoreConnector {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataStoreConnectorImpl.class);
-	private String address;
+	private final String address;
 
 	public DataStoreConnectorImpl(String dataStoreAddress) {
 		address = dataStoreAddress;
 	}
 
-
 	/* (non-Javadoc)
      * @see pl.nask.hsn2.connector.REST.DataStoreConnector#sendGet(long, long)
      */
 	@Override
-    public DataResponse sendGet(long jobId, long dataId) throws IOException {
-	    String fullAddress = DSUtils.dsAddress(address, jobId, dataId);
-
-	    InputStream inputStream = null;
-		try{
-
-		    RestRequestor client = RestRequestor.get(fullAddress);
-		    inputStream = client.getInputStream();
-		    LOGGER.debug(client.getResponseMessage());
-		    if (client.getResponseCode() == SC_OK) {
-		        return DataResponse.newBuilder()
-					.setData(ByteString.copyFrom(IOUtils.toByteArray(inputStream)))
-					.setType(ResponseType.DATA)
-					.build();
-		    } else {
-		    	return DataResponse.newBuilder()
-						.setType(ResponseType.ERROR)
-						.setError(msg(inputStream))
-						.build();
-		    }
-	    } finally {
-	        IOUtils.closeQuietly(inputStream);
-	    }
+	public InputStream sendGet(long jobId, long dataId) throws IOException {
+		String fullAddress = DSUtils.dsAddress(address, jobId, dataId);
+		RestRequestor client = RestRequestor.get(fullAddress);
+		LOGGER.debug(client.getResponseMessage());
+		if (client.getResponseCode() == SC_OK) {
+			return new BufferedInputStream(client.getInputStream());
+		} else {
+			return null;
+		}
 	}
 
 	private String msg(InputStream inputStream) throws IOException {
@@ -84,15 +67,14 @@ public class DataStoreConnectorImpl implements DataStoreConnector {
 		} else {
 			return null;
 		}
-			
+
 	}
 
-
 	/* (non-Javadoc)
-     * @see pl.nask.hsn2.connector.REST.DataStoreConnector#sendPost(byte[], long)
-     */
+	 * @see pl.nask.hsn2.connector.REST.DataStoreConnector#sendPost(java.io.InputStream, long)
+	 */
 	@Override
-    public DataResponse sendPost(byte[] data, long jobId) throws IOException {
+	public DataResponse sendPost(byte[] data, long jobId) throws IOException {
 		return sendPost(new ByteArrayInputStream(data), jobId);
 	}
 
@@ -104,29 +86,21 @@ public class DataStoreConnectorImpl implements DataStoreConnector {
 	    String fullAddress = DSUtils.dsAddress(address, jobId);
 
 	    RestRequestor client = RestRequestor.post(fullAddress, dataInputStream);
-	    InputStream inputStream = null;
-	    try{
-	        inputStream  = client.getInputStream();
+	    try (InputStream inputStream = client.getInputStream()) {
 	        String message = msg(inputStream);
 	        LOGGER.debug(message);
-	        LOGGER.debug("Response code: {}", client.getResponseCode());
-	        if (client.getResponseCode() == SC_CREATED) {
-	            return DataResponse.newBuilder()
-	            .setRef(Reference.newBuilder()
-	                    .setKey(Long.parseLong(client.getHeaderField("Content-ID"))))
-	                    .setType(ResponseType.OK)
-	                    .build();
+	        int responseCode = client.getResponseCode();
+			LOGGER.debug("Response code: {}", responseCode);
+	        if (responseCode == SC_CREATED) {
+	        	String keyFromHeader = client.getHeaderField("Content-ID");
+	            long key = Long.parseLong(keyFromHeader);
+	            DataResponse dr = new DataResponse(key);
+	            return dr;
 	        } else {
-	            return DataResponse.newBuilder()
-	            .setType(ResponseType.ERROR)
-	            .setError(message)
-	            .build();
+	        	return new DataResponse(message);
 	        }
-	    } finally {
-	        IOUtils.closeQuietly(inputStream);
 	    }
 	}
-
 
 	/* (non-Javadoc)
      * @see pl.nask.hsn2.connector.REST.DataStoreConnector#getResourceAsStream(long, long)
@@ -134,56 +108,49 @@ public class DataStoreConnectorImpl implements DataStoreConnector {
 	@Override
 	public InputStream getResourceAsStream(long jobId, long referenceId) throws ResourceException, StorageException {
 	    String fullAddress = DSUtils.dsAddress(address, jobId, referenceId);
-	    InputStream errorStream = null;
 	    
 	    try {
-	        RestRequestor client = RestRequestor.get(fullAddress);
+	    	RestRequestor client = RestRequestor.get(fullAddress);
 	        LOGGER.debug(client.getResponseMessage());
 	        int respCode = client.getResponseCode();
 	        if (respCode == SC_OK){
 	            return client.getInputStream();
 	        } else {
-	        	errorStream = client.getErrorStream();
-	        	String errorMessage = msg(errorStream);
-	        	
-	        	throw new ResourceException(String.format("Expected dataStore to respond with code 200, got %s. Message is: %s, %s",respCode, client.getResponseMessage(), errorMessage));
+	        	try (InputStream errorStream = client.getErrorStream()) {
+	        		String errorMessage = msg(errorStream);
+	        		throw new ResourceException(String.format("Expected dataStore to respond with code 200, got %s. Message is: %s, %s",respCode, client.getResponseMessage(), errorMessage));
+	        	}
 	        }
 	    } catch (IOException e) {
 	        throw new StorageException("Storage error (IOException)", e);
-	    } finally {
-	    	IOUtils.closeQuietly(errorStream);
 	    }
 	}
 
 	@Override
 	public GeneratedMessage getResourceAsMsg(long jobId, long referenceId, String msgType) throws ResourceException, StorageException {
-
 	    String fullAddress = DSUtils.dsAddress(address, jobId, referenceId);
-
-        InputStream inputStream = null;
         try{
             RestRequestor client = RestRequestor.get(fullAddress);
-            inputStream = client.getInputStream();
-            LOGGER.debug(client.getResponseMessage());
-            if (client.getResponseCode() == SC_OK) {
-                return buildMessageObject(IOUtils.toByteArray(inputStream), msgType);
-            } else {
-                throw new StorageException("Error getting object from DataStore: " + msg(inputStream));
-            }
+			try (InputStream inputStream = client.getInputStream()) {
+				LOGGER.debug(client.getResponseMessage());
+				if (client.getResponseCode() == SC_OK) {
+					return buildMessageObject(inputStream, msgType);
+				} else {
+					throw new StorageException("Error getting object from DataStore: " + msg(inputStream));
+				}
+			}
         } catch (IOException e) {
             throw new StorageException("Storage error (IOException)", e);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
         }
 	}
 
-	private GeneratedMessage buildMessageObject(byte[] is, String msgType) {
-
+	@SuppressWarnings("unchecked")
+	private GeneratedMessage buildMessageObject(InputStream is, String msgType) {
 	    Class<GeneratedMessage> clazz = null;
         try {
             clazz = (Class<GeneratedMessage>) Class.forName("pl.nask.hsn2.protobuff.Resources$" + msgType);
 
-            Method parseFrom = clazz.getMethod("parseFrom", byte[].class);
+            Method parseFrom = clazz.getMethod("parseFrom", InputStream.class);
             GeneratedMessage msg = (GeneratedMessage) parseFrom.invoke(null, is);
 
             return msg;

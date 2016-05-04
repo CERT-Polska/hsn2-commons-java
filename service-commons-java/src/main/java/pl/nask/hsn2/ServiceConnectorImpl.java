@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,9 +35,9 @@ import pl.nask.hsn2.connector.BusException;
 import pl.nask.hsn2.connector.ObjectStoreConnector;
 import pl.nask.hsn2.connector.AMQP.InConnector;
 import pl.nask.hsn2.connector.AMQP.ObjectStoreConnectorImpl;
+import pl.nask.hsn2.connector.REST.DataResponse;
 import pl.nask.hsn2.connector.REST.DataStoreConnector;
 import pl.nask.hsn2.connector.REST.DataStoreConnectorImpl;
-import pl.nask.hsn2.protobuff.DataStore.DataResponse;
 import pl.nask.hsn2.protobuff.Object.ObjectData;
 import pl.nask.hsn2.protobuff.ObjectStore.ObjectResponse;
 import pl.nask.hsn2.protobuff.Process.TaskAccepted;
@@ -58,6 +58,7 @@ public class ServiceConnectorImpl implements ServiceConnector {
 
     public ServiceConnectorImpl(String connectorAddress, String serviceQueueName, String commonExchangeName, String objectStoreQueueName, String dataStoreAddress) {
     	try {
+    		LOGGER.debug("SERVICE QUEUE = {}", serviceQueueName);
 			this.frameworkConnector = new InConnector(connectorAddress, new RbtDestination(commonExchangeName, serviceQueueName));
 			this.objectStoreConnector = new ObjectStoreConnectorImpl(connectorAddress, objectStoreQueueName);
 			this.dataStoreConnector = new DataStoreConnectorImpl(dataStoreAddress);
@@ -159,12 +160,12 @@ public class ServiceConnectorImpl implements ServiceConnector {
 	}
 
 	@Override
-	public DataResponse sendDataStoreData(long jobId, InputStream is) throws ResourceException, IOException{
+	public DataResponse sendDataStoreData(long jobId, InputStream is) throws IOException{
 	    return dataStoreConnector.sendPost(is, jobId);
 	}
 
 	@Override
-	public DataResponse getDataStoreData(long jobId, long dataId) throws IOException {
+	public InputStream getDataStoreData(long jobId, long dataId) throws IOException {
 		return dataStoreConnector.sendGet(jobId, dataId);
 	}
 
@@ -221,4 +222,21 @@ public class ServiceConnectorImpl implements ServiceConnector {
 	public ObjectResponse getObjectStoreData(long jobId, List<Long> objectsId) throws StorageException {
 		return objectStoreConnector.getObjectStoreData(jobId, objectsId);
 	}
+
+	@Override
+	public void ignoreLastTaskRequest() {
+		frameworkConnector.ackLastMessage();
+	}
+
+	@Override
+	public void close() {
+		try {
+			frameworkConnector.close();
+			objectStoreConnector.close();
+		} catch (BusException e) {
+			LOGGER.warn("Exception when closing",e);
+		}
+		
+	}
+
 }

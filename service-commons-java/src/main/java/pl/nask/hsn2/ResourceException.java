@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,17 +19,17 @@
 
 package pl.nask.hsn2;
 
-
 public class ResourceException extends Exception {
-
-
+	/**
+	 * Serial id.
+	 */
 	private static final long serialVersionUID = -5244655329797077725L;
 
 	public ResourceException(String msg, Throwable e) {
-        super(msg, e);
-    }
+		super(msg, e);
+	}
 
-    public ResourceException(String msg) {
-        super(msg);
-    }
+	public ResourceException(String msg) {
+		super(msg);
+	}
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -240,7 +240,7 @@ public class DefaultObjectStoreConnector extends AbstractSerializableConnector i
 			
 			Message response = requestResponseEndPoint.sendAndGet(request);
 
-			LOGGER.debug("Got response from OS for {}", objectRequest.getRequestType());
+			LOGGER.info("Got response from OS for {}, corrID: {}", objectRequest.getRequestType(), correlationId);
 			LOGGER.trace("Response message from OS: {}", response);
 			
 			if (!correlationId.equals(response.getCorrelationId())) {
@@ -287,5 +287,16 @@ public class DefaultObjectStoreConnector extends AbstractSerializableConnector i
 			throw new ObjectStoreConnectorException("Communication error. Invalid request taken.", e);
 		}
 	}
+
+	@Override
+	public void releaseResources() {
+		try {
+			notificationEndPoint.close();
+		} catch (BusException e) {
+			LOGGER.warn("Closing failed.",e);
+		}
+		
+	}
+
 
 }

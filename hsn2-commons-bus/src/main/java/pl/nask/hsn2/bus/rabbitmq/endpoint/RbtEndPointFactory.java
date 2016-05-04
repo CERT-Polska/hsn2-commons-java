@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -213,10 +213,10 @@ public class RbtEndPointFactory implements EndPointFactory {
 	 */
 	public void reconnect() throws BusException {
 		try {
-			LOGGER.debug("(Re)connecting to Rabbit MQ server.");
+			LOGGER.info("(Re)connecting to Rabbit MQ server.");
 			RbtUtils.closeConnection(this.connection);
 			this.connection = factory.newConnection(new ConfigurableExecutorService("rbt-consumer-", numberOfconsumerThreads));			
-			LOGGER.debug("Connected to Rabbit MQ server.");
+			LOGGER.info("Connected to Rabbit MQ server.");
 		} catch (IOException e) {
 			throw new BusException("Cannot connect to Rabbit MQ server.", e);
 		}

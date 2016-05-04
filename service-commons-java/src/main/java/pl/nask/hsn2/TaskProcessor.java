@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 
 package pl.nask.hsn2;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -48,23 +47,27 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
     private final TaskFactory jobFactory;
     private final TaskContextFactory taskContextFactory;
     private final ServiceConnector connector;
+    private final FinishedJobsListener finishedJobsListener;
 
 	private AtomicBoolean interrupted = new AtomicBoolean(false);
 
-    public TaskProcessor(TaskFactory jobFactory, ServiceConnector serviceConnector) {
+    public TaskProcessor(TaskFactory jobFactory, ServiceConnector serviceConnector, FinishedJobsListener finishedJobsListener) {
         this.jobFactory = jobFactory;
         this.connector = serviceConnector;
         this.taskContextFactory = this;
+        this.finishedJobsListener = finishedJobsListener;
     }
 
-    public TaskProcessor(TaskFactory jobFactory, ServiceConnector serviceConnector, TaskContextFactory contextFactory) {
+    public TaskProcessor(TaskFactory jobFactory, ServiceConnector serviceConnector, TaskContextFactory contextFactory, FinishedJobsListener finishedJobsListener) {
         this.jobFactory = jobFactory;
         this.connector = serviceConnector;
         this.taskContextFactory = contextFactory;
+        this.finishedJobsListener = finishedJobsListener;
     }
     
     public void setCanceled() {
     	interrupted.set(true);
+    	connector.close();
     }
 
     @Override
@@ -94,49 +97,70 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
 			long taskStartMilis = System.currentTimeMillis();
 			jobId = req.getJob();
 			reqId = req.getTaskId();
-			ParametersWrapper params = new ParametersWrapper(req.getParametersList());
-			LOG.info("Got TaskRequest (jobId={}, requestId={}) with params={}, ObjectData={}", new Object[] { jobId, reqId, params, req.getObject() });
-
-			LOG.debug("Fetching data from object store, jobId={}, original ObjectData={}", jobId, req.getObject());
-			ObjectData data = getDataFromObjectStore(jobId, req.getObject());
-			LOG.debug("Got fresh data from object store: {}", data);
-
-			ObjectDataWrapper objectData = new ObjectDataWrapper(data);
-			TaskContext context = taskContextFactory.createTaskContext(jobId, reqId, objectData.getId(), connector);
-			Task job = jobFactory.newTask(context, params, objectData);
-			if (job.takesMuchTime()) {
-				LOG.info("Sending TaskAccepted (jobId={}, reqId={}, ObjectData={})", new Object[] {jobId, reqId, req.getObject()});
-				connector.sendTaskAccepted(jobId, reqId);
-			}
-
-			LOG.info("Processing task (jobId={}, reqId={})", jobId, reqId);
-			job.process();
-			LOG.debug("Task completed (jobId={}, reqId={})", jobId, reqId);
-
-			context.flush();
-			List<Long> newObjects = context.getAddedObjects();
-			LOG.debug("Sending TaskComplete (jobId={}, reqId={})", jobId, reqId);
-			if (context.hasWarnings()) {
-				connector.sendTaskCompletedWithWarnings(jobId, reqId, newObjects, context.getWarnings());
+			
+			if (finishedJobsListener != null && finishedJobsListener.isJobFinished(jobId)) {
+				connector.ignoreLastTaskRequest();
+				LOG.warn("Got TaskRequest for finished job. Ignored. (jobId={}, requestId={})", jobId, reqId);
 			} else {
-				connector.sendTaskComplete(jobId, reqId, newObjects);
+				ParametersWrapper params = new ParametersWrapper(req.getParametersList());
+				LOG.info("Got TaskRequest (jobId={}, requestId={}) with params={}, ObjectData={}", new Object[] { jobId, reqId, params, req.getObject() });
+
+				LOG.debug("Fetching data from object store, jobId={}, original ObjectData={}", jobId, req.getObject());
+				ObjectData data = getDataFromObjectStore(jobId, req.getObject());
+				LOG.debug("Got fresh data from object store: {}", data);
+
+				ObjectDataWrapper objectData = new ObjectDataWrapper(data);
+				TaskContext context = taskContextFactory.createTaskContext(jobId, reqId, objectData.getId(), connector);
+				Task job = jobFactory.newTask(context, params, objectData);
+				if (job.takesMuchTime()) {
+					LOG.info("Sending TaskAccepted (jobId={}, reqId={}, ObjectData={})", new Object[] {jobId, reqId, req.getObject()});
+					connector.sendTaskAccepted(jobId, reqId);
+				}
+
+				LOG.info("Processing task (jobId={}, reqId={})", jobId, reqId);
+				job.process();
+				LOG.debug("Task completed (jobId={}, reqId={})", jobId, reqId);
+
+				if (finishedJobsListener != null && finishedJobsListener.isJobFinished(jobId)) {
+					connector.ignoreLastTaskRequest();
+					LOG.warn("Got job finished notification. Task cancelled after processed. (jobId={}, requestId={})", jobId, reqId);
+				}
+				else{
+					context.flush();
+					List<Long> newObjects = context.getAddedObjects();
+					LOG.debug("Sending TaskComplete (jobId={}, reqId={})", jobId, reqId);
+					if (context.hasWarnings()) {
+						connector.sendTaskCompletedWithWarnings(jobId, reqId, newObjects, context.getWarnings());
+					} else {
+						connector.sendTaskComplete(jobId, reqId, newObjects);
+					}
+					LOG.info("TaskComplete sent (jobId={}, reqId={}, newObjects.count={})", new Object[] { jobId, reqId, newObjects.size() });
+					LOG.debug("Task processing time: {} sec.", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - taskStartMilis));
+				}
 			}
-			LOG.info("TaskComplete sent (jobId={}, reqId={}, newObjects.count={})", new Object[] { jobId, reqId, newObjects.size() });
-			LOG.debug("Task processing time: {} sec.", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - taskStartMilis));
+
 		} catch (RequiredParameterMissingException e) {
 			LOG.error("Required parameter missing (jobId={}, reqId={}): {}", new Object[] { jobId, reqId, e.getParamName() });
 			connector.sendTaskError(jobId, reqId, e);
 		} catch (InputDataException e) {
-			logException("Input data error", jobId, reqId, e);
+			logError("Input data error", jobId, reqId, e);
 			connector.sendTaskError(jobId, reqId, e);
 		} catch (ResourceException e) {
-			logException("Error accessing resource", jobId, reqId, e);
+			logError("Error accessing resource", jobId, reqId, e);
 			connector.sendTaskError(jobId, reqId, e);
 		} catch (StorageException e) {
-			logException("Error accessing storage", jobId, reqId, e);
+			logError("Error accessing storage", jobId, reqId, e);
 			connector.sendTaskError(jobId, reqId, e);
+		} catch (ShutdownSignalException e) {
+			LOG.warn("Broker has been closed. Service will be closed!");
+			LOG.debug(e.getMessage(),e);
+			System.exit(5);
 		} catch (BusException e) {
 			logError("Communication error!", jobId, reqId, e);
+			if ( interrupted.get()) {
+				throw new InterruptedException("task interrupted:"+reqId);
+			}
+			
 		} catch (InterruptedException e) {
 			logError("Interrupted while processing job", jobId, reqId, e);
 			throw e;
@@ -159,7 +183,7 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
         return new TaskContext(jobId, reqId, objectDataId, connector);
     }
 
-    private ObjectData getDataFromObjectStore(long jobId, long objectId) throws StorageException, ShutdownSignalException, InterruptedException, IOException {
+    private ObjectData getDataFromObjectStore(long jobId, long objectId) throws StorageException, InterruptedException {
         List<Long> objectsId = new ArrayList<Long>();
         objectsId.add(objectId);
         List<ObjectData> objectDataList = getDataFromObjectStore(jobId, objectsId);
@@ -178,10 +202,5 @@ public class TaskProcessor implements Callable<Void>, TaskContextFactory {
         } catch (StorageException e) {
             throw new StorageException(String.format("Cannot retrieve ObjectData from object store, jobId=%s, dataId=%s", jobId, objectsId), e);
         }
-    }
-
-    private void logException(String msg, long jobId, int reqId, Exception e) {
-        LOG.error("{} (jobId={}, reqId={}): {}", new Object[]{msg, jobId, reqId, e.getMessage()});
-        LOG.debug(msg, e);
     }
 }

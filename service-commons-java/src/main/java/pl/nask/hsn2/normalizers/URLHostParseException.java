@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,20 +20,20 @@
 package pl.nask.hsn2.normalizers;
 
 public class URLHostParseException extends Exception {
+	/**
+	 * Serial id.
+	 */
+	private static final long serialVersionUID = 7488067343336128732L;
 
 	public URLHostParseException(String string) {
 		super(string);
 	}
+
 	public URLHostParseException() {
 		super();
 	}
-	public URLHostParseException(String msg,Throwable t) {
-		super(msg,t);
+
+	public URLHostParseException(String msg, Throwable t) {
+		super(msg, t);
 	}
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 7488067343336128732L;
-
 }

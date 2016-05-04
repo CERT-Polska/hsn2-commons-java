@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@ final public class URLNormalizerUtils {
     }
 
     public static String dnsToIDN(StringBuilder str, int startIndx, int endIndx) throws URLHostParseException {
-    	if (str.length() == 0) {
+    	if (str.length() == 0 || startIndx == endIndx) {
     		throw new URLHostParseException("Cannot process empty string");
     	}
         if (endIndx > str.length()) {
@@ -126,6 +126,10 @@ final public class URLNormalizerUtils {
             return host;
         }
         host = host.toLowerCase();
+        
+        while (host.endsWith(".")) {
+        	host = host.substring(0, host.length()-1);
+        }
         
         str.replace(startIndx, endIndx, host);
         return host;

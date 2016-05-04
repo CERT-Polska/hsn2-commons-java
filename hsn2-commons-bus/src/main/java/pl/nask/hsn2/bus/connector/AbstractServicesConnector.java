@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,16 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package pl.nask.hsn2;
+package pl.nask.hsn2.bus.connector;
 
-public class ContextSizeLimitExceeded extends Exception {
 
-	public ContextSizeLimitExceeded(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public ContextSizeLimitExceeded(String message) {
-		super(message);
-	}
+public interface AbstractServicesConnector {
 	
+	
+	/**
+	 * Release any resources held by this object.
+	 * @throws BusException
+	 */
+	void releaseResources();
+
 }

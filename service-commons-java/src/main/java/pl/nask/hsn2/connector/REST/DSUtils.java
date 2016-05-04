@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +19,16 @@
 
 package pl.nask.hsn2.connector.REST;
 
-public class DSUtils {
+public final class DSUtils {
+	private DSUtils() {
+		// Utility class.
+	}
 
-    public static String dsAddress(String address, long jobId) {
-        return String.format("%sdata/%s", address, jobId);
-    }
+	public static String dsAddress(String address, long jobId) {
+		return String.format("%sdata/%s", address, jobId);
+	}
 
-
-    public static String dsAddress(String address, long jobId, long dataId) {
-        return String.format("%sdata/%s/%s", address, jobId, dataId);
-    }
+	public static String dsAddress(String address, long jobId, long dataId) {
+		return String.format("%sdata/%s/%s", address, jobId, dataId);
+	}
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ import pl.nask.hsn2.bus.api.endpoint.EndPointFactory;
 import pl.nask.hsn2.bus.api.endpoint.FireAndForgetEndPoint;
 import pl.nask.hsn2.bus.connector.AbstractSerializableConnector;
 import pl.nask.hsn2.bus.operations.JobFinished;
+import pl.nask.hsn2.bus.operations.JobFinishedReminder;
 import pl.nask.hsn2.bus.operations.JobStarted;
 import pl.nask.hsn2.bus.operations.JobStatus;
 import pl.nask.hsn2.bus.operations.Operation;
@@ -71,5 +72,25 @@ public class DefaultJobEventsNotifier extends AbstractSerializableConnector impl
 		} catch (BusException e) {
 			LOGGER.error("Cant send out notification.", e);
 		}
+	}
+
+	@Override
+	public void jobFinishedReminder(long jobId, JobStatus status, int offendingTask) {
+		JobFinishedReminder reminder = new JobFinishedReminder(jobId);
+		reminder.setOffendingTask(offendingTask);
+		if (status != null) {
+			reminder.setStatus(status);
+		}
+		sendOut(reminder);
+	}
+
+	@Override
+	public void releaseResources() {
+		try {
+			notifyEndPoint.close();
+		} catch (BusException e) {
+			LOGGER.warn("Closing failed.",e);
+		}
+		
 	}
 }

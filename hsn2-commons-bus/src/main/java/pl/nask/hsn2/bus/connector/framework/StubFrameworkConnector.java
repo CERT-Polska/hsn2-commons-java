@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -111,4 +111,19 @@ public class StubFrameworkConnector implements FrameworkConnector {
 			throws FrameworkConnectorException {
 		return false;
 	}
+
+	@Override
+	public void releaseResources() {
+		// TODO Auto-generated method stub
+		throw new IllegalStateException("Not implemented!.");
+		
+	}
+
+	@Override
+	public boolean sendJobCancelRequest(long jobId)
+			throws FrameworkConnectorException {
+		// TODO Auto-generated method stub
+		throw new IllegalStateException("Not implemented!.");
+	}
+
 }

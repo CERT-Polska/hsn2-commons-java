@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,25 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package pl.nask.hsn2;
+package pl.nask.hsn2.bus.operations.builder;
 
-import junit.framework.Assert;
+import pl.nask.hsn2.bus.operations.JobCancelRequest;
 
-import org.testng.annotations.Test;
+public class JobCancelRequestBuilder implements OperationBuilder<JobCancelRequest> {
 
-import pl.nask.hsn2.connector.REST.DSUtils;
-
-public class UtilsTest {
-
-    @Test
-    public void testGetAddress() {
-        String address = DSUtils.dsAddress("http://localhost:8080/", 1, 1);
-        Assert.assertEquals("http://localhost:8080/data/1/1", address);
-    }
-
-    @Test
-    public void testPostAddress() {
-        String address = DSUtils.dsAddress("http://localhost:8080/", 1);
-        Assert.assertEquals("http://localhost:8080/data/1", address);
-    }
+	private JobCancelRequest jobCancelRequest;
+	
+	public JobCancelRequestBuilder(long jobId) {
+		this.jobCancelRequest = new JobCancelRequest(jobId);
+	}
+	
+	@Override
+	public JobCancelRequest build() {
+		return this.jobCancelRequest;
+	}
 }

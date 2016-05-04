@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -111,12 +111,15 @@ public abstract class AbstractPooledEndPoint {
 			try {
 				executor.shutdown();
 				executor.awaitTermination(waitForFinishTime, TimeUnit.SECONDS);
-				executor = null;
+				
 			} catch (InterruptedException e) {
 				// not important in this case
+			} finally {
+				closed = true;
+				executor = null;
 			}
 		}
-		closed = true;
+		
 	}
 
 	/**

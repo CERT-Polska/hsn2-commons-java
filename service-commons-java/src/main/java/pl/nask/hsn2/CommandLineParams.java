@@ -1,7 +1,7 @@
 /*
  * Copyright (c) NASK, NCSC
  * 
- * This file is part of HoneySpider Network 2.0.
+ * This file is part of HoneySpider Network 2.1.
  * 
  * This is a free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,15 +23,16 @@ import pl.nask.hsn2.logger.LoggerForLog4j;
 import pl.nask.hsn2.logger.LoggerManager;
 
 public class CommandLineParams extends GenericCmdParams {
-    private final static OptionNameWrapper CONNECTOR_ADDRESS = new OptionNameWrapper("con", "connector");
-    private final static OptionNameWrapper OS_QUEUE_NAME = new OptionNameWrapper("osQN","osQueueName");
-    private final static OptionNameWrapper SV_QUEUE_NAME = new OptionNameWrapper("svQN","svQueueName");
-    private final static OptionNameWrapper SV_NAME = new OptionNameWrapper("svN","svName");
-    private final static OptionNameWrapper MAX_THREADS = new OptionNameWrapper("maxT","maxThreads");
-    private final static OptionNameWrapper DATA_STORE_ADDRESS = new OptionNameWrapper("ds", "dataStore");
-	private final static OptionNameWrapper LOG_LEVEL = new OptionNameWrapper("ll", "logLevel");
-	private final static OptionNameWrapper LOG_FILE = new OptionNameWrapper("lf", "logFile");
-    private final static OptionNameWrapper RBT_COMMON_EXCHANGE = new OptionNameWrapper("rce", "rbtCommonExchange");
+    private static final OptionNameWrapper CONNECTOR_ADDRESS = new OptionNameWrapper("con", "connector");
+    private static final OptionNameWrapper OS_QUEUE_NAME = new OptionNameWrapper("osQN","osQueueName");
+    private static final OptionNameWrapper SV_QUEUE_NAME = new OptionNameWrapper("svQN","svQueueName");
+    private static final OptionNameWrapper SV_NAME = new OptionNameWrapper("svN","svName");
+    private static final OptionNameWrapper MAX_THREADS = new OptionNameWrapper("maxT","maxThreads");
+    private static final OptionNameWrapper DATA_STORE_ADDRESS = new OptionNameWrapper("ds", "dataStore");
+    private static final OptionNameWrapper LOG_LEVEL = new OptionNameWrapper("ll", "logLevel");
+    private static final OptionNameWrapper LOG_FILE = new OptionNameWrapper("lf", "logFile");
+    private static final OptionNameWrapper RBT_COMMON_EXCHANGE = new OptionNameWrapper("rce", "rbtCommonExchange");
+    private static final OptionNameWrapper RBT_NOTIFY_EXCHANGE = new OptionNameWrapper("rne", "rbtNotifyExchange");
     private boolean hasDataStoreAddressOption = true;
 
     private static final String SERVICE_PREFIX = "srv-";
@@ -71,9 +72,13 @@ public class CommandLineParams extends GenericCmdParams {
 		return true;
 	}
 
-    protected boolean hasRbtCommonExchange() {
-    	return true;
-    }
+	protected boolean hasRbtCommonExchange() {
+		return true;
+	}
+
+	protected boolean hasRbtNotifyExchange() {
+		return true;
+	}
 
     @Override
     public void initOptions() {
@@ -104,6 +109,9 @@ public class CommandLineParams extends GenericCmdParams {
         if (hasRbtCommonExchange()) {
         	addOption(RBT_COMMON_EXCHANGE, "name", "RabbitMQ common exchange name");
         }
+        if (hasRbtNotifyExchange()) {
+        	addOption(RBT_NOTIFY_EXCHANGE, "name", "RabbitMQ notify exchange name");
+        }
     }
 
 	@Override
@@ -114,6 +122,7 @@ public class CommandLineParams extends GenericCmdParams {
         setDefaultValue(LOG_LEVEL, loggerManager.getDefaultLogLevel());
         setDefaultValue(LOG_FILE, loggerManager.getDefaultLogFile());
         setDefaultValue(RBT_COMMON_EXCHANGE, "main");
+        setDefaultValue(RBT_NOTIFY_EXCHANGE, "notify");
     }
 
 	public void applyArguments(GenericService service) {
@@ -207,5 +216,9 @@ public class CommandLineParams extends GenericCmdParams {
 
 	public String getRbtCommonExchangeName() {
 		return getOptionValue(RBT_COMMON_EXCHANGE);
+	}
+
+	public String getRbtNotifyExchangeName() {
+		return getOptionValue(RBT_NOTIFY_EXCHANGE);
 	}
 }
